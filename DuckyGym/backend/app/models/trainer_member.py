@@ -16,7 +16,8 @@ class TrainerMember(Base):
     __tablename__ = "trainer_members"
     __table_args__ = (
         CheckConstraint(
-            "end_date IS NULL OR end_date >= start_date", name="date_range_valid"
+            "end_date IS NULL OR end_date >= start_date",
+            name="ck_trainer_members_date_range",
         ),
         Index("ix_trainer_members_trainer_status", "trainer_id", "status"),
         Index("ix_trainer_members_member_status", "member_id", "status"),

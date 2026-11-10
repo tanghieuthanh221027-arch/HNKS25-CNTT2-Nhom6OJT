@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class TrainingBooking(Base, CreatedAtMixin):
     __tablename__ = "training_bookings"
     __table_args__ = (
-        CheckConstraint("end_time > start_time", name="time_range_valid"),
+        CheckConstraint("end_time > start_time", name="ck_training_bookings_time_range"),
         Index("ix_training_bookings_member_status", "member_id", "status"),
         Index(
             "ix_training_bookings_trainer_slot",

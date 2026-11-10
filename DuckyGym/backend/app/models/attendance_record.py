@@ -17,7 +17,8 @@ class AttendanceRecord(Base):
     __tablename__ = "attendance_records"
     __table_args__ = (
         CheckConstraint(
-            "check_out IS NULL OR check_out >= check_in", name="time_range_valid"
+            "check_out IS NULL OR check_out >= check_in",
+            name="ck_attendance_records_time_range",
         ),
         Index("ix_attendance_records_member_status", "member_id", "status"),
         Index("ix_attendance_records_check_in", "check_in"),

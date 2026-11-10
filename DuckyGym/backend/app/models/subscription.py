@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class Subscription(Base, TimestampMixin):
     __tablename__ = "subscriptions"
     __table_args__ = (
-        CheckConstraint("end_date >= start_date", name="date_range_valid"),
+        CheckConstraint("end_date >= start_date", name="ck_subscriptions_date_range"),
         Index("ix_subscriptions_member_status", "member_id", "status"),
         Index("ix_subscriptions_status_end_date", "status", "end_date"),
     )

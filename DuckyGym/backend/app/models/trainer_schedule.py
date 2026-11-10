@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 class TrainerSchedule(Base):
     __tablename__ = "trainer_schedules"
     __table_args__ = (
-        CheckConstraint("end_time > start_time", name="time_range_valid"),
+        CheckConstraint("end_time > start_time", name="ck_trainer_schedules_time_range"),
         UniqueConstraint(
             "trainer_id", "work_date", "start_time", name="uq_trainer_schedules_slot"
         ),
