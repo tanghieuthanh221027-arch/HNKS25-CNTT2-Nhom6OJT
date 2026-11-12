@@ -16,7 +16,7 @@ class MembershipPlan(Base, TimestampMixin):
     __tablename__ = "membership_plans"
     __table_args__ = (
         CheckConstraint("duration_days > 0", name="duration_positive"),
-        CheckConstraint("price >= 0", name="price_non_negative"),
+        CheckConstraint("price > 0", name="price_positive"),
         Index("ix_membership_plans_category_status", "category", "status"),
     )
 

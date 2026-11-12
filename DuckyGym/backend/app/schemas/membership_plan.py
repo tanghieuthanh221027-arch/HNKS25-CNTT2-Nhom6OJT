@@ -5,7 +5,7 @@ from typing import Annotated, Optional
 from pydantic import BaseModel, Field, StringConstraints, model_validator
 
 from app.models.enums import PlanStatus
-from app.schemas.common import Money, ORMModel
+from app.schemas.common import PositiveMoney, ORMModel
 
 PlanName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=100)]
 PlanCategory = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
@@ -15,7 +15,7 @@ class PlanBase(BaseModel):
     plan_name: PlanName
     category: PlanCategory
     duration_days: int = Field(gt=0, le=3650)
-    price: Money
+    price: PositiveMoney
     description: Optional[str] = None
 
 
@@ -27,7 +27,7 @@ class PlanUpdate(BaseModel):
     plan_name: Optional[PlanName] = None
     category: Optional[PlanCategory] = None
     duration_days: Optional[int] = Field(default=None, gt=0, le=3650)
-    price: Optional[Money] = None
+    price: Optional[PositiveMoney] = None
     description: Optional[str] = None
 
     @model_validator(mode="after")
