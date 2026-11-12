@@ -7,22 +7,9 @@ import AdminPage from "./pages/AdminPage";
 import MemberPage from "./pages/MemberPage";
 import PTPage from "./pages/PTPage";
 import Unauthorized from "./pages/Unauthorized";
+import HomePage from "./pages/HomePage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
-import { useAuth } from "./context/AuthContext";
-
-const HomeRedirect = () => {
-  const { user } = useAuth();
-
-  if (!user) return <Navigate to="/login" replace />;
-
-  const role = user.role?.toUpperCase();
-
-  if (role === "ADMIN") return <Navigate to="/admin" replace />;
-  if (role === "PT") return <Navigate to="/pt" replace />;
-
-  return <Navigate to="/member" replace />;
-};
 
 function App() {
   return (
@@ -45,7 +32,7 @@ function App() {
         <Route path="/pt" element={<PTPage />} />
       </Route>
 
-      <Route path="/" element={<HomeRedirect />} />
+      <Route path="/" element={<HomePage />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
