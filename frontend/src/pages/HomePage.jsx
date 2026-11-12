@@ -8,21 +8,21 @@ const equipment = [
     tag: "Mỹ & Ý",
     title: "Cardio Technogym",
     text: "Màn hình Live 4K tích hợp lộ trình chạy giả lập và cảm biến nhịp tim chuẩn y khoa.",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCleTBNHfwhk2W4R4X_BjtUNCwuRx3_Kd5L9yhs51fLdMcQDS1Rkf1Aqq_wyTD87pbhTMTWN8fhdL66e2qXempY1IZofkPMNvL5FqRBLaO8KgdU26dNkU7fINmJ4-U-j045Sw4Ya3EcG6mexvqmUWfi_wbR3pzkVjtLREhBN-tjIoHMmPJgYbGS0zny3kSiSRAHTDhkNDAPoRZhhbvgwRBHXrkh6G5E_7pva1gEpzw",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAIVnhqmBAhGVGw1u8GQ7vLArQNFiR8DSyEm-hXYOiNiiYj9NMKqaIIaG1K4kgerF0Sy8hczuxHIdOXHIMW79z_x2X9yKCynlDWLFXsgBis-K8Sf6MsIpBzcSPUtG87H-yTp13TamcVvbLujouWRFbN1JISHLbuSudXkxyI-ado4VICE3tQpoisePAmNoB48WHPBW1sHythqCILOY4LIDhgQoytYhXBghy3ocNElWA",
   },
   {
     icon: "fitness_center",
     tag: "Chuyên nghiệp",
     title: "Giàn tạ Rogue & Olympic",
     text: "Hệ khung thép chịu tải cao cùng đĩa tạ cao su chuẩn thi đấu thế giới.",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAIVnhqmBAhGVGw1u8GQ7vLArQNFiR8DSyEm-hXYOiNiiYj9NMKqaIIaG1K4kgerF0Sy8hczuxHIdOXHIMW79z_x2X9yKCynlDWLFXsgBis-K8Sf6MsIpBzcSPUtG87H-yTp13TamcVvbLujouWRFbN1JISHLbuSudXkxyI-ado4VICE3tQpoisePAmNoB48WHPBW1sHythqCILOY4LIDhgQoytYhXBghy3ocNElWA",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB0KbP7UL3mdpGPRZGHCrEmV_yo2vIhGnarg4fILOejoIT50-kaS-JVy3k1dViAjLtitiEuaGXVSGS9sbPhOEfRQg2fDEX91kRibUlNTm6iEuUwaWshKc1gyg0D4CiPLTNSDngMuYfD3-m0OUvFv6Bdd7XCo9BNoRfR206eTF_rtA_4tDMr12TrqAXRUtyzssHpk5b5ld9k6_GdHcXI0HwL_5chdDynK7_JxdIPalY",
   },
   {
     icon: "spa",
     tag: "Phục hồi",
     title: "Xông hơi đá muối",
     text: "Thư giãn cơ thể và phục hồi năng lượng sau mỗi buổi tập luyện cường độ cao.",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB0KbP7UL3mdpGPRZGHCrEmV_yo2vIhGnarg4fILOejoIT50-kaS-JVy3k1dViAjLtitiEuaGXVSGS9sbPhOEfRQg2fDEX91kRibUlNTm6iEuUwaWshKc1gyg0D4CiPLTNSDngMuYfD3-m0OUvFv6Bdd7XCo9BNoRfR206eTF_rtA_4tDMr12TrqAXRUtyzssHpk5b5ld9k6_GdHcXI0HwL_5chdDynK7_JxdIPalY",
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAXZYGpUjJvDom-lpjjiMLx9pH0IOE0UWbyFtlH-z1k3CCI7pRIpvkVP3qbkcu1SzKbdAe_h4rppWU200Slm19WNB2hcBqLO_FMt9rTs45LL5ZbYGZYwFe38PU214VCPxj1TOwrz_JK55vNiUeMHRBZXHHXV3aPOACL07sCiHmtgWdOfPX0x-TvtFko7SL385KWCkPH5-PUW-4it98x3lUt20FGB_eqcR7Y5DBuY5Q",
   },
 ];
 
