@@ -13,6 +13,9 @@ from app.db.init_db import create_default_admin, create_tables
 # Khi bạn tạo xong thư mục app/routers (hoặc app/api), chỉ cần bỏ comment dòng dưới:
 # from app.routers import api_router
 
+# ---> DÒNG THÊM MỚI: Import auth router
+from app.routers import auth, users  
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
@@ -59,6 +62,10 @@ def create_app() -> FastAPI:
 
     # Gắn toàn bộ các router nghiệp vụ (UC01 -> UC06) vào prefix /api/v1
     # app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+    
+    # ---> DÒNG THÊM MỚI: Đăng ký router cho Login/Register
+    app.include_router(auth.router)
+    app.include_router(users.router)
 
     @app.get("/", tags=["System"])
     def root() -> dict[str, Any]:
