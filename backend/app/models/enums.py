@@ -1,8 +1,9 @@
 import enum
-from typing import Type
+from typing import TypeVar
 
 from sqlalchemy import Enum as SAEnum
 
+E = TypeVar("E", bound=enum.Enum)
 
 class UserRole(str, enum.Enum):
     ADMIN = "ADMIN"
@@ -66,7 +67,6 @@ class PaymentStatus(str, enum.Enum):
     FAILED = "FAILED"
     REFUNDED = "REFUNDED"
 
-
 class ScheduleStatus(str, enum.Enum):
     ACTIVE = "ACTIVE"
     CANCELLED = "CANCELLED"
@@ -128,6 +128,11 @@ class RevenuePeriod(str, enum.Enum):
     MONTH = "MONTH"
 
 
+EMPLOYEE_ROLES: frozenset[UserRole] = frozenset(
+    {UserRole.ADMIN, UserRole.STAFF, UserRole.CASHIER, UserRole.TRAINER}
+)
+
+
 BOOKING_TRANSITIONS: dict[BookingStatus, set[BookingStatus]] = {
     BookingStatus.PENDING: {BookingStatus.CONFIRMED, BookingStatus.CANCELLED},
     BookingStatus.CONFIRMED: {BookingStatus.COMPLETED, BookingStatus.CANCELLED},
@@ -150,12 +155,37 @@ INVOICE_TRANSITIONS: dict[InvoiceStatus, set[InvoiceStatus]] = {
     InvoiceStatus.REFUNDED: set(),
 }
 
+SUBSCRIPTION_TRANSITIONS: dict[SubscriptionStatus, set[SubscriptionStatus]] = {
+    SubscriptionStatus.PENDING: {
+        SubscriptionStatus.ACTIVE,
+        SubscriptionStatus.CANCELLED,
+    },
+    SubscriptionStatus.ACTIVE: {
+        SubscriptionStatus.SUSPENDED,
+        SubscriptionStatus.EXPIRED,
+        SubscriptionStatus.CANCELLED,
+    },
+    SubscriptionStatus.SUSPENDED: {
+        SubscriptionStatus.ACTIVE,
+        SubscriptionStatus.CANCELLED,
+    },
+    SubscriptionStatus.EXPIRED: set(),
+    SubscriptionStatus.CANCELLED: set(),
+}
 
-def enum_column(enum_cls: Type[enum.Enum], length: int) -> SAEnum:
+
+def can_transition(table: dict[E, set[E]], current: E, target: E) -> bool:
+    return target in table.get(current, set())
+
+
+def enum_column(enum_cls: type[enum.Enum], length: int) -> SAEnum:
+    def values_callable(cls: type[enum.Enum]) -> list[str]:
+        return [str(member.value) for member in cls]
+
     return SAEnum(
         enum_cls,
         native_enum=False,
         length=length,
         validate_strings=True,
-        values_callable=lambda members: [member.value for member in members],
+        values_callable=values_callable,
     )

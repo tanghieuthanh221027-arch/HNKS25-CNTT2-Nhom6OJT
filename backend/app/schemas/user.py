@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Annotated, Optional
+from typing import Annotated, Optional , Any
 
 from pydantic import (
     BaseModel,
@@ -26,7 +26,7 @@ EMPLOYMENT_FIELDS = ("position", "hire_date", "salary")
 TRAINER_FIELDS = ("specialization", "experience_years", "bio")
 
 
-def _check_role_fields(role: UserRole, values: dict) -> None:
+def _check_role_fields(role: UserRole, values: dict[str , Any]) -> None:
     if role == UserRole.MEMBER:
         for field in EMPLOYMENT_FIELDS:
             if values.get(field) is not None:
