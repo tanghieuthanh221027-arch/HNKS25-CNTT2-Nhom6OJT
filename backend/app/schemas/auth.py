@@ -1,5 +1,5 @@
 from typing import Optional
-
+from pydantic import EmailStr
 from pydantic import BaseModel, Field, field_validator
 
 from app.models.enums import UserRole
@@ -41,3 +41,9 @@ class LoginResponse(BaseModel):
     token: Token
     user: UserResponse
     redirect_to: Optional[str] = None
+
+class RegisterRequest(BaseModel):
+    name: str
+    email: EmailStr
+    phone: str
+    password: str

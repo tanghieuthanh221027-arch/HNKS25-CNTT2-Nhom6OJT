@@ -33,12 +33,20 @@ export const AuthProvider = ({ children }) => {
 
   // Đăng nhập
   const login = async (data) => {
-    const response = await authApi.login(data);
+    // 1. Tự động chuyển đổi 'email' từ form thành 'username' để gửi cho Backend
+    const loginPayload = {
+      username: data.email || data.username,
+      password: data.password
+    };
 
-    const token = response.data.access_token;
+    const response = await authApi.login(loginPayload);
+
+    // 2. Lấy token từ object lồng nhau theo đúng schema LoginResponse của nhóm
+    const token = response.data.token.access_token;
 
     localStorage.setItem("token", token);
 
+    // Backend nhóm đã trả về sẵn thông tin user trong response.data.user
     const userResponse = response.data.user
       ? { data: response.data.user }
       : await authApi.getMe();
