@@ -80,6 +80,7 @@
 .login-title { margin-bottom: 30px; }
 .login-title h1 { margin: 0; font-family: "Space Grotesk", Arial, sans-serif; font-size: 34px; letter-spacing: -.03em; }
 .login-title p { margin: 8px 0 0; color: var(--login-muted); font-size: 14px; line-height: 1.6; }
+.login-success { margin: -12px 0 20px; padding: 11px 13px; border: 1px solid rgb(123 208 255 / 24%); border-radius: 7px; background: rgb(123 208 255 / 8%); color: #aee4ff; font-size: 12px; }
 .login-form { display: flex; flex-direction: column; gap: 20px; }
 .login-field label { display: block; margin-bottom: 8px; color: var(--login-muted); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
 .login-input-wrap { position: relative; display: flex; align-items: center; }
@@ -95,9 +96,6 @@
 .login-error { margin: -8px 0 0; color: #ffb4ab; font-size: 13px; }
 .login-submit { display: flex; height: 50px; align-items: center; justify-content: center; gap: 10px; margin-top: 2px; border: 0; border-radius: 8px; background: var(--login-orange); color: #351400; cursor: pointer; font-family: "Space Grotesk", Arial, sans-serif !important; font-size: 13px !important; font-weight: 700 !important; letter-spacing: .08em; text-transform: uppercase; transition: background .2s, transform .2s; }
 .login-submit:hover { transform: translateY(-1px); background: #fb923c; }
-.login-divider { position: relative; display: flex; align-items: center; justify-content: center; margin: 26px 0 18px; color: #9299ad; font-size: 10px; letter-spacing: .15em; text-transform: uppercase; }
-.login-divider::before { position: absolute; right: 0; left: 0; height: 1px; background: var(--login-input); content: ""; }
-.login-divider span { position: relative; padding: 0 12px; background: #131b2e; }
 .login-social { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .login-social button { display: flex; height: 42px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 8px; background: rgb(45 52 73 / 70%); color: var(--login-text); font-size: 12px; }
 .login-social button:disabled { opacity: .8; }

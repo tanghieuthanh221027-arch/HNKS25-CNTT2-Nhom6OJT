@@ -2,12 +2,13 @@ import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import RegisterMember from "./pages/RegisterMember";
 import AdminPage from "./pages/AdminPage";
 import MemberPage from "./pages/MemberPage";
 import PTPage from "./pages/PTPage";
 import Unauthorized from "./pages/Unauthorized";
 import HomePage from "./pages/HomePage";
+import MembershipPage from "./pages/MembershipPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -16,7 +17,8 @@ function App() {
     <Routes>
       {/* Các trang công khai */}
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/register" element={<RegisterMember />} />
+      <Route path="/membership" element={<MembershipPage />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
 
       {/* Các trang cần đăng nhập */}

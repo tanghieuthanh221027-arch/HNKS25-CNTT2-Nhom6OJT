@@ -1,5 +1,5 @@
-import React from "react";
-import { Link } from "react-router-dom";
+﻿import React from "react";
+import { Link, useLocation } from "react-router-dom";
 import "./HomePage.css";
 
 const equipment = [
@@ -33,20 +33,24 @@ const trainers = [
 ];
 
 const membershipPlans = [
-  { name: "Starter", price: "499.000", duration: "1 tháng", features: ["Tập tại 1 chi nhánh", "Truy cập phòng gym", "Tủ đồ cá nhân"] },
-  { name: "Pro Fitness", price: "399.000", duration: "6 tháng", popular: true, features: ["Tập toàn hệ thống Ducky Gym", "Lớp Yoga, HIIT mỗi tuần", "Khu Sauna cao cấp"] },
-  { name: "VIP Elite", price: "299.000", duration: "12 tháng", features: ["Toàn bộ quyền lợi Pro", "Dẫn theo bạn tập miễn phí", "Khăn tập & đồ uống mỗi buổi"] },
+  { id: "starter", name: "Starter", price: "499.000", duration: "1 tháng", features: ["PT hướng dẫn 3 ngày", "Truy cập phòng gym", "Tủ đồ cá nhân"] },
+  { id: "pro", name: "Pro Fitness", price: "399.000", duration: "6 tháng", popular: true, features: ["PT hướng dẫn 7 ngày", "Lớp Yoga, HIIT mỗi tuần", "Khu Sauna cao cấp"] },
+  { id: "vip", name: "VIP Elite", price: "320.000", duration: "12 tháng", features: ["Toàn bộ quyền lợi Pro", "Dẫn theo bạn tập miễn phí", "Khăn tập & đồ uống mỗi buổi"] },
 ];
 
-const HomePage = () => (
-  <div className="home-page">
+const HomePage = () => {
+  const location = useLocation();
+
+  return (
+    <div className="home-page">
+      {location.state?.message && <div className="home-toast" role="status">{location.state.message}</div>}
     <header className="home-header">
       <div className="home-nav">
-        <Link className="home-brand" to="/" aria-label="Ducky Gym trang chủ"><span className="material-symbols-outlined">fitness_center</span> Ducky Gym</Link>
+        <Link className="home-brand" to="/" aria-label="Ducky Gym trang chủ" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}><span className="material-symbols-outlined">fitness_center</span> Ducky Gym</Link>
         <nav className="home-nav-links" aria-label="Điều hướng chính">
           <a href="#equipment">Thiết bị</a><a href="#trainers">Huấn luyện viên</a><a href="#plans">Bảng giá</a>
         </nav>
-        <div className="home-nav-actions"><Link className="home-login" to="/login">Đăng nhập</Link><Link className="home-join" to="/register">Tham gia ngay</Link></div>
+        <div className="home-nav-actions"><Link className="home-login" to="/login">Đăng nhập</Link><Link className="home-join" to="/register">Đăng ký</Link></div>
       </div>
     </header>
 
@@ -57,7 +61,7 @@ const HomePage = () => (
           <p className="home-eyebrow"><span /> Hệ thống Fitness tiên phong 2025</p>
           <h1>Kiến tạo vóc dáng <em>đỉnh cao</em></h1>
           <p className="home-hero-text">Nâng tầm giới hạn bản thân cùng thiết bị chuẩn quốc tế, huấn luyện viên tận tâm và cộng đồng Ducky Gym đầy năng lượng.</p>
-          <div className="home-hero-actions"><Link className="home-join" to="/register">Đăng ký tập thử <span className="material-symbols-outlined">arrow_forward</span></Link><a className="home-outline-button" href="#equipment">Khám phá Ducky Gym</a></div>
+          <div className="home-hero-actions"><Link className="home-join" to="/membership">Đăng ký gói tập <span className="material-symbols-outlined">arrow_forward</span></Link><a className="home-outline-button" href="#equipment">Khám phá Ducky Gym</a></div>
           <div className="home-stats"><div><b>24/7</b><span>Giờ tập linh hoạt</span></div><div><b>40+</b><span>Lớp tập mỗi tuần</span></div><div><b>5.0</b><span>Trải nghiệm hội viên</span></div></div>
         </div>
         <a className="home-scroll" href="#equipment"><span className="material-symbols-outlined">south</span> Khám phá thêm</a>
@@ -93,7 +97,7 @@ const HomePage = () => (
             <h3>{plan.name}</h3><p className="home-plan-duration">Gói hội viên · {plan.duration}</p>
             <p className="home-plan-price">{plan.price}<small> đ / tháng</small></p>
             <ul>{plan.features.map((feature) => <li key={feature}><span className="material-symbols-outlined">check_circle</span>{feature}</li>)}</ul>
-            <Link className={plan.popular ? "home-join" : "home-plan-button"} to="/register">Đăng ký gói</Link>
+            <Link className={plan.popular ? "home-join" : "home-plan-button"} to={`/membership?plan=${plan.id}`}>Đăng ký gói</Link>
           </article>)}
         </div>
       </section>
@@ -106,13 +110,15 @@ const HomePage = () => (
     <footer className="home-footer">
       <div className="home-footer-grid">
         <div><Link className="home-brand" to="/"><span className="material-symbols-outlined">fitness_center</span> Ducky Gym</Link><p>Hệ thống phòng tập thể hình chuẩn quốc tế, định hình phong cách sống kỷ luật và hiệu suất tối đa.</p></div>
-        <div><h3>Chi nhánh</h3><p>Landmark: 720A Điện Biên Phủ, Bình Thạnh</p><p>Ducky Gym Center: 65 Lê Lợi, Quận 1, TP. HCM</p><p>Ducky Gym West: 102 Hoàng Đạo Thúy, Cầu Giấy, Hà Nội</p></div>
+        <div><h3>Địa điểm</h3><p>123 Hà Đông, Hà Nội</p></div>
         <div><h3>Khám phá</h3><a href="#equipment">Hệ sinh thái thiết bị</a><a href="#trainers">Đội ngũ huấn luyện viên</a><a href="#plans">Gói hội viên</a></div>
         <div><h3>Liên hệ</h3><p>Hotline: 1900 6868 (24/7)</p><p>Email: contact@duckygym.com.vn</p><p>05:30 – 23:00 hàng ngày</p></div>
       </div>
       <div className="home-footer-bottom"><span>© 2025 Ducky Gym &amp; Fitness</span><Link to="/register">Điều khoản hội viên</Link></div>
     </footer>
-  </div>
-);
+    </div>
+  );
+};
 
 export default HomePage;
+

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "./Login.css";
 
 const Login = () => {
   const { login } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -22,6 +23,12 @@ const Login = () => {
     try {
       const user = await login(form);
       const role = user.role?.toUpperCase();
+      const returnTo = location.state?.from;
+
+      if (returnTo) {
+        navigate(returnTo);
+        return;
+      }
 
       if (role === "ADMIN") navigate("/admin");
       else if (role === "PT") navigate("/pt");
@@ -67,6 +74,8 @@ const Login = () => {
                 <h1>Đăng nhập</h1>
                 <p>Nhập thông tin hội viên của bạn để tiếp tục tập luyện</p>
               </div>
+
+              {location.state?.message && <p className="login-success" role="status">{location.state.message}</p>}
 
               <form className="login-form" onSubmit={handleSubmit}>
                 <div className="login-field">
@@ -123,11 +132,6 @@ const Login = () => {
                 </button>
               </form>
 
-              <div className="login-divider"><span>Hoặc</span></div>
-              <div className="login-social" aria-label="Đăng nhập mạng xã hội">
-                <button type="button" disabled><b className="login-google">G</b> Google</button>
-                <button type="button" disabled><span className="material-symbols-outlined">phone_iphone</span> Apple ID</button>
-              </div>
               <p className="login-register">Chưa có tài khoản? <Link to="/register">Đăng ký hội viên ngay <span className="material-symbols-outlined">north_east</span></Link></p>
             </div>
           </div>
