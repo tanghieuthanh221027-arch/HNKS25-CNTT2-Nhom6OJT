@@ -15,14 +15,16 @@
 .home-page * { box-sizing: border-box; }
 .home-page a { color: inherit; text-decoration: none; }
 .home-page .material-symbols-outlined { font-size: 20px; line-height: 1; }
-.home-header { position: absolute; z-index: 5; top: 0; left: 0; width: 100%; border-bottom: 1px solid rgb(255 255 255 / 7%); background: rgb(11 19 38 / 72%); backdrop-filter: blur(18px); }
-.home-nav { display: flex; width: min(1440px, 100%); height: 78px; align-items: center; justify-content: space-between; gap: 24px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 72px); }
+.home-toast { position: fixed; z-index: 20; top: 92px; left: 50%; max-width: min(560px, calc(100% - 32px)); padding: 13px 18px; border: 1px solid rgb(123 208 255 / 28%); border-radius: 8px; background: #131b2e; color: #bfeaff; box-shadow: 0 12px 36px rgb(0 0 0 / 35%); font-size: 12px; line-height: 1.5; transform: translateX(-50%); }
+.home-header { position: fixed; z-index: 5; top: 0; left: 0; width: 100%; border-bottom: 1px solid rgb(255 255 255 / 7%); background: rgb(11 19 38 / 88%); backdrop-filter: blur(18px); }
+.home-nav { display: flex; width: min(1440px, 100%); height: 78px; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: clamp(8px, 2vw, 24px); margin: 0 auto; padding: 0 clamp(16px, 5vw, 72px); }
 .home-brand { display: inline-flex; align-items: center; gap: 9px; color: var(--home-text); font-family: "Space Grotesk", Arial, sans-serif; font-size: 20px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .home-brand .material-symbols-outlined { color: #ffb690; }
+.home-nav > .home-brand { flex: 0 0 auto; white-space: nowrap; }
 .home-nav-links, .home-nav-actions { display: flex; align-items: center; gap: clamp(16px, 3vw, 38px); }
 .home-nav-links a, .home-login { color: #c0c7da; font-size: 12px; transition: color .2s; }
 .home-nav-links a:hover, .home-login:hover { color: #ffb690; }
-.home-nav-actions { gap: 22px; }
+.home-nav-actions { flex: 0 0 auto; gap: 22px; white-space: nowrap; }
 .home-join, .home-outline-button, .home-plan-button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 9px; padding: 0 20px; border: 1px solid transparent; border-radius: 7px; background: var(--home-orange); color: #351400 !important; font-family: "Space Grotesk", Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; transition: transform .2s, background .2s, border-color .2s; }
 .home-join:hover, .home-plan-button:hover { transform: translateY(-2px); background: #fb923c; }
 .home-join .material-symbols-outlined { font-size: 17px; }
@@ -122,10 +124,10 @@
 
 @media (max-width: 560px) {
   .home-nav { height: 68px; padding: 0 16px; }
-  .home-brand { font-size: 17px; }
-  .home-nav-actions { gap: 12px; }
-  .home-nav-actions .home-join { min-height: 38px; padding: 0 11px; font-size: 9px; }
-  .home-login { font-size: 10px; }
+  .home-nav > .home-brand { gap: 6px; font-size: clamp(14px, 4.2vw, 17px); letter-spacing: .02em; }
+  .home-nav-actions { gap: 8px; }
+  .home-nav-actions .home-join { min-height: 38px; padding: 0 9px; font-size: 8px; }
+  .home-login { font-size: 9px; }
   .home-hero { min-height: 730px; padding: 112px 22px 68px; }
   .home-hero::before { background: linear-gradient(90deg, rgb(6 14 32 / 91%), rgb(6 14 32 / 45%)), linear-gradient(0deg, #0b1326 0%, transparent 35%); }
   .home-hero h1 { font-size: clamp(45px, 13vw, 66px); }
