@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import RegisterMember from "./pages/RegisterMember";
 import AdminPage from "./pages/AdminPage";
 import MemberPage from "./pages/MemberPage";
+import MemberProfilePage from "./pages/MemberProfilePage";
 import PTPage from "./pages/PTPage";
 import Unauthorized from "./pages/Unauthorized";
 import HomePage from "./pages/HomePage";
@@ -28,6 +29,7 @@ function App() {
 
       <Route element={<ProtectedRoute allowedRoles={["MEMBER"]} />}>
         <Route path="/member" element={<MemberPage />} />
+        <Route path="/member/profile" element={<MemberProfilePage />} />
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={["PT"]} />}>
