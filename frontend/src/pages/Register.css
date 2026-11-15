@@ -1,0 +1,113 @@
+.register-page {
+  --register-bg: #0b1326;
+  --register-panel: #171f33;
+  --register-field: #222a3d;
+  --register-text: #dae2fd;
+  --register-muted: #a6adc2;
+  --register-orange: #f97316;
+  min-height: 100vh;
+  background: var(--register-bg);
+  color: var(--register-text);
+  font-family: Inter, Arial, sans-serif;
+}
+
+.register-page * { box-sizing: border-box; }
+.register-page a { color: inherit; text-decoration: none; }
+.register-page button, .register-page input, .register-page select { font: inherit; }
+.register-page .material-symbols-outlined { font-size: 20px; line-height: 1; }
+.register-header { position: absolute; z-index: 2; top: 0; left: 0; display: flex; width: 100%; height: 80px; align-items: center; justify-content: space-between; padding: 0 clamp(24px, 6vw, 88px); background: rgb(11 19 38 / 88%); backdrop-filter: blur(16px); }
+.register-brand, .register-back { display: inline-flex; align-items: center; gap: 10px; }
+.register-brand { font-family: "Space Grotesk", Arial, sans-serif; font-size: 20px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.register-brand .material-symbols-outlined { color: #ffb690; }
+.register-back { color: var(--register-muted) !important; font-size: 14px; transition: color .2s; }
+.register-back:hover { color: var(--register-text) !important; }
+.register-main { min-height: 100vh; padding: 104px 24px 48px; }
+.register-layout { display: grid; width: min(1440px, 100%); align-items: start; grid-template-columns: minmax(340px, 5fr) minmax(0, 7fr); gap: 32px; margin: 0 auto; }
+.register-aside { display: flex; flex-direction: column; gap: 20px; }
+.register-plan-card, .register-form-card { position: relative; overflow: hidden; border: 1px solid rgb(255 255 255 / 4%); border-radius: 14px; background: var(--register-panel); box-shadow: 0 20px 60px rgb(0 0 0 / 22%); }
+.register-plan-card { display: flex; flex-direction: column; gap: 22px; padding: clamp(22px, 3vw, 36px); }
+.register-plan-card::before { position: absolute; top: -100px; right: -90px; width: 220px; height: 220px; border-radius: 50%; background: rgb(249 115 22 / 10%); content: ""; filter: blur(35px); pointer-events: none; }
+.register-plan-tag { position: relative; display: inline-flex; width: fit-content; align-items: center; gap: 8px; padding: 7px 11px; border-radius: 99px; background: rgb(249 115 22 / 12%); color: #ffb690; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.register-plan-tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--register-orange); box-shadow: 0 0 10px var(--register-orange); }
+.register-plan-heading { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.register-plan-heading h2 { margin: 0; font-family: "Space Grotesk", Arial, sans-serif; font-size: clamp(21px, 2vw, 28px); letter-spacing: -.03em; }
+.register-plan-heading > span { flex: 0 0 auto; padding: 5px 9px; border-radius: 5px; background: #2d3449; color: var(--register-muted); font-size: 11px; }
+.register-price { margin: -10px 0 0; color: #ffb690; font-family: "Space Grotesk", Arial, sans-serif; font-size: clamp(42px, 5vw, 58px); font-weight: 700; letter-spacing: -.05em; }
+.register-price small { color: var(--register-muted); font-family: Inter, Arial, sans-serif; font-size: 13px; font-weight: 400; letter-spacing: 0; }
+.register-gift { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 9px; background: var(--register-field); }
+.register-gift > .material-symbols-outlined { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: rgb(217 119 34 / 18%); color: #ffb783; }
+.register-gift div { display: flex; flex-direction: column; gap: 5px; }
+.register-gift b { color: #ffb783; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.register-gift div span { color: var(--register-muted); font-size: 12px; line-height: 1.5; }
+.register-benefits { display: flex; flex-direction: column; gap: 13px; margin: 0; padding: 0; list-style: none; }
+.register-benefits li { display: flex; align-items: flex-start; gap: 9px; color: #cbd3e8; font-size: 12px; line-height: 1.5; }
+.register-benefits .material-symbols-outlined { flex: 0 0 auto; color: #7bd0ff; font-size: 17px; }
+.register-plan-picker { padding-top: 4px; }
+.register-plan-picker > p { margin: 0 0 10px; color: var(--register-muted); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.register-plan-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.register-plan-options button, .register-time-options button, .register-goals button { min-height: 40px; border: 1px solid transparent; border-radius: 7px; background: var(--register-field); color: #cbd3e8; cursor: pointer; font-size: 11px; font-weight: 600; transition: background .18s, border-color .18s, color .18s; }
+.register-plan-options button:hover, .register-time-options button:hover, .register-goals button:hover { background: #31394d; }
+.register-plan-options button.is-selected, .register-time-options button.is-selected, .register-goals button.is-selected { border-color: rgb(249 115 22 / 25%); background: rgb(249 115 22 / 17%); color: #ffb690; }
+.register-pass { position: relative; display: flex; min-height: 104px; align-items: center; justify-content: space-between; gap: 15px; overflow: hidden; padding: 20px 22px; border-radius: 12px; background: #060e20; }
+.register-pass div { display: flex; flex-direction: column; gap: 7px; }
+.register-pass div span { color: #7bd0ff; font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.register-pass div b { max-width: 300px; font-family: "Space Grotesk", Arial, sans-serif; font-size: 14px; line-height: 1.4; }
+.register-pass > .material-symbols-outlined { display: grid; width: 48px; height: 48px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: rgb(0 166 223 / 18%); color: #7bd0ff; }
+.register-form-card { padding: clamp(24px, 3.2vw, 42px); }
+.register-title { margin-bottom: 26px; }
+.register-title h1 { margin: 0; font-family: "Space Grotesk", Arial, sans-serif; font-size: clamp(23px, 2.4vw, 30px); letter-spacing: -.03em; }
+.register-title p { margin: 8px 0 0; color: var(--register-muted); font-size: 13px; line-height: 1.6; }
+.register-form { display: flex; flex-direction: column; gap: 20px; }
+.register-fields { display: grid; gap: 16px; }
+.register-fields.two-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.register-field { min-width: 0; }
+.register-field label, .register-choice legend { display: block; margin-bottom: 8px; color: var(--register-muted); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.register-input { position: relative; display: flex; align-items: center; }
+.register-input > .material-symbols-outlined { position: absolute; left: 12px; color: #8f98ae; pointer-events: none; font-size: 18px; }
+.register-input input, .register-input select { width: 100%; height: 46px; padding: 0 13px 0 40px; appearance: none; border: 1px solid transparent; border-radius: 7px; outline: none; background: var(--register-field); color: var(--register-text); font-size: 12px; }
+.register-input input::placeholder { color: #858da3; }
+.register-input input:focus, .register-input select:focus { border-color: var(--register-orange); background: #2d3449; }
+.register-input select { padding-right: 34px; cursor: pointer; }
+.register-select-icon { right: 10px; left: auto !important; font-size: 18px !important; }
+.register-choice { min-width: 0; margin: 0; padding: 0; border: 0; }
+.register-choice legend { padding: 0; }
+.register-time-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.register-time-options button { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 5px; }
+.register-time-options button .material-symbols-outlined { font-size: 16px; }
+.register-goals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.register-goals button { padding: 8px 4px; }
+.register-terms { display: flex; align-items: flex-start; gap: 10px; color: var(--register-muted); font-size: 11px; line-height: 1.6; cursor: pointer; }
+.register-terms input { width: 16px; height: 16px; flex: 0 0 auto; margin: 1px 0 0; accent-color: var(--register-orange); }
+.register-terms a, .register-actions p a { color: #ffb690; }
+.register-terms a:hover, .register-actions p a:hover { text-decoration: underline; }
+.register-error { margin: -10px 0 0; color: #ffb4ab; font-size: 12px; }
+.register-actions { display: flex; flex-direction: column; gap: 14px; }
+.register-submit { display: flex; min-height: 50px; align-items: center; justify-content: center; gap: 10px; border: 0; border-radius: 7px; background: var(--register-orange); color: #351400; cursor: pointer; font-family: "Space Grotesk", Arial, sans-serif !important; font-size: 12px !important; font-weight: 700 !important; letter-spacing: .08em; text-transform: uppercase; transition: background .2s, transform .2s; }
+.register-submit:hover:not(:disabled) { transform: translateY(-1px); background: #fb923c; }
+.register-submit:disabled { cursor: wait; opacity: .7; }
+.register-actions p { margin: 0; color: var(--register-muted); font-size: 11px; text-align: center; }
+.register-actions p a { margin-left: 4px; font-weight: 700; text-transform: uppercase; }
+
+@media (max-width: 900px) {
+  .register-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .register-aside { display: grid; grid-template-columns: minmax(0, 1fr) minmax(230px, .8fr); align-items: stretch; }
+  .register-pass { min-height: auto; }
+}
+
+@media (max-width: 600px) {
+  .register-header { height: 68px; padding: 0 18px; }
+  .register-main { padding: 86px 12px 24px; }
+  .register-aside { display: flex; }
+  .register-plan-card, .register-form-card { padding: 22px 18px; }
+  .register-fields.two-columns { grid-template-columns: 1fr; gap: 16px; }
+  .register-time-options { grid-template-columns: 1fr; }
+  .register-time-options button { justify-content: flex-start; padding-left: 13px; }
+  .register-goals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 380px) {
+  .register-back { font-size: 0; }
+  .register-back .material-symbols-outlined { font-size: 21px; }
+  .register-plan-options { gap: 5px; }
+  .register-plan-options button { font-size: 10px; }
+}
