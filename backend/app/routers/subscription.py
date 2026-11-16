@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from dependencies.auth import require_roles
-from models.enums import UserRole
-from models.user import User
-from schemas.subscription import (
+from app.db.database import get_db
+from app.dependencies.auth import require_roles
+from app.models.enums import UserRole
+from app.models.user import User
+from app.schemas.subscription import (
     SubscriptionDetailResponse,
     SubscriptionSelfCreate,
 )
-from service.subscription import (
+from app.services.subscription import (
     create_my_subscription,
     get_my_current_subscription,
 )

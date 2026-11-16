@@ -7,18 +7,18 @@ import qrcode
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
-from core.exception import BusinessRuleException, NotFoundException
-from models.enums import (
+from app.core.exception import BusinessRuleException, NotFoundException
+from app.models.enums import (
     Gender,
     MemberStatus,
     SubscriptionStatus,
     SubscriptionType,
 )
-from models.member import Member
-from models.membership_plan import MembershipPlan
-from models.subscription import Subscription
-from models.user import User
-from schemas.subscription import SubscriptionDetailResponse, SubscriptionSelfCreate
+from app.models.member import Member
+from app.models.membership_plan import MembershipPlan
+from app.models.subscription import Subscription
+from app.models.user import User
+from app.schemas.subscription import SubscriptionDetailResponse, SubscriptionSelfCreate
 
 
 def _generate_unique_card_code(db: Session) -> str:

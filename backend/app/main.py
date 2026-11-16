@@ -9,7 +9,7 @@ from app.core.handler import register_exception_handlers
 from app.core.security import hash_password
 from app.db.database import SessionLocal
 from app.db.init_db import create_default_admin, create_tables
-from app.routers import auth, membership_plans, users
+from app.routers import auth, membership_plans, user
 
 
 @asynccontextmanager
@@ -46,7 +46,7 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
 
     app.include_router(auth.router)
-    app.include_router(users.router)
+    app.include_router(user.router)
     app.include_router(membership_plans.router)
 
     @app.get("/health", tags=["System"])
