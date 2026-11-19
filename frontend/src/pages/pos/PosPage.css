@@ -1,0 +1,495 @@
+/* Tổng thể trang */
+.pos-container {
+  min-height: 100vh;
+  background-color: #0a111e;
+  color: #f1f5f9;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.pos-wrapper {
+  max-width: 1150px;
+  margin: 0 auto;
+}
+
+/* Header */
+.pos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.pos-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pos-logo-badge {
+  background-color: #f97316;
+  color: #ffffff;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.pos-brand-name {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #ffffff;
+}
+
+.pos-nav {
+  display: flex;
+  gap: 24px;
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+.pos-nav span {
+  cursor: pointer;
+}
+
+.pos-nav span:hover {
+  color: #ffffff;
+}
+
+.pos-btn-orange {
+  background-color: #f97316;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.pos-btn-orange:hover:not(:disabled) {
+  background-color: #ea580c;
+}
+
+.pos-btn-orange:disabled {
+  background-color: #1e293b;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+/* Tiêu đề trang */
+.pos-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: #f97316;
+  margin: 0 0 4px 0;
+}
+
+.pos-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0 0 24px 0;
+}
+
+/* Bố cục 2 cột chính */
+.pos-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .pos-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pos-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Card khối nội dung */
+.pos-card {
+  background-color: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
+
+.pos-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #94a3b8;
+  margin: 0 0 16px 0;
+}
+
+/* Form tìm kiếm & Input */
+.pos-input-group {
+  display: flex;
+  gap: 12px;
+}
+
+.pos-input {
+  flex: 1;
+  background-color: #090d16;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+}
+
+.pos-input:focus {
+  border-color: #f97316;
+}
+
+.pos-error {
+  color: #f87171;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+/* Thẻ hội viên tìm thấy */
+.pos-member-box {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background-color: #090d16;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pos-member-name {
+  font-weight: 800;
+  color: #34d399;
+  font-size: 16px;
+  margin: 0;
+}
+
+.pos-member-phone {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 4px 0 0 0;
+}
+
+.pos-member-badge {
+  font-size: 12px;
+  background-color: #1e293b;
+  color: #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+/* Nút chọn Mua mới / Gia hạn */
+.pos-tab-group {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.pos-tab-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid #1e293b;
+  background-color: #090d16;
+  color: #94a3b8;
+  transition: 0.2s;
+}
+
+.pos-tab-btn.active {
+  background-color: #f97316;
+  border-color: #f97316;
+  color: #ffffff;
+}
+
+/* Danh sách gói tập */
+.pos-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .pos-plans-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pos-plan-item {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #1e293b;
+  background-color: #090d16;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.pos-plan-item:hover {
+  border-color: #475569;
+}
+
+.pos-plan-item.selected {
+  border-color: #f97316;
+  background-color: rgba(249, 115, 22, 0.1);
+}
+
+.pos-plan-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.pos-plan-price {
+  font-weight: 800;
+  font-size: 16px;
+  color: #f97316;
+  margin: 10px 0 0 0;
+}
+
+/* Voucher & Phương thức thanh toán */
+.pos-btn-secondary {
+  background-color: #1e293b;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.pos-btn-secondary:hover {
+  background-color: #334155;
+}
+
+.pos-label-small {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin: 18px 0 10px 0;
+}
+
+.pos-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.pos-method-btn {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #1e293b;
+  background-color: #090d16;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pos-method-btn.selected {
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+}
+
+/* Cột phải: Chi tiết thanh toán */
+.pos-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 14px;
+  border-top: 1px solid #1e293b;
+  padding-top: 16px;
+}
+
+.pos-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pos-summary-label {
+  color: #94a3b8;
+}
+
+.pos-summary-val {
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.pos-discount-val {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.pos-total-box {
+  border-top: 1px solid #1e293b;
+  margin-top: 20px;
+  padding-top: 16px;
+}
+
+.pos-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 6px;
+}
+
+.pos-total-price {
+  font-size: 26px;
+  font-weight: 900;
+  color: #f97316;
+}
+
+.pos-checkout-btn {
+  width: 100%;
+  margin-top: 24px;
+  padding: 16px;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+/* Modal Hóa đơn */
+.pos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 999;
+}
+
+.pos-invoice-box {
+  background-color: #ffffff;
+  color: #0f172a;
+  width: 100%;
+  max-width: 380px;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.pos-invoice-header {
+  text-align: center;
+  border-bottom: 1px dashed #cbd5e1;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.pos-invoice-logo {
+  display: inline-block;
+  background-color: #f97316;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.pos-invoice-title {
+  font-size: 17px;
+  font-weight: 900;
+  margin: 0;
+  color: #1e293b;
+}
+
+.pos-invoice-status {
+  font-size: 12px;
+  font-weight: 800;
+  color: #059669;
+  margin: 6px 0 0 0;
+}
+
+.pos-invoice-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.pos-invoice-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.pos-invoice-total {
+  border-top: 1px solid #cbd5e1;
+  padding-top: 12px;
+  margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.pos-invoice-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.pos-btn-print {
+  flex: 1;
+  background-color: #0f172a;
+  color: #ffffff;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pos-btn-close {
+  flex: 1;
+  background-color: #e2e8f0;
+  color: #1e293b;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Chế độ In hóa đơn */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-invoice,
+  #printable-invoice * {
+    visibility: visible;
+  }
+  #printable-invoice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

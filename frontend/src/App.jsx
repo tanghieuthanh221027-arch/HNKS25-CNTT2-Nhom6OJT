@@ -9,7 +9,7 @@ import MemberProfilePage from "./pages/MemberProfilePage";
 import PTPage from "./pages/PTPage";
 import Unauthorized from "./pages/Unauthorized";
 import HomePage from "./pages/HomePage";
-import MembershipPage from "./pages/MembershipPage";
+import MembershipPage from "./pages/MembershipPage"; import PosPage from "./pages/pos/PosPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -20,7 +20,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<RegisterMember />} />
       <Route path="/membership" element={<MembershipPage />} />
-      <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="/unauthorized" element={<Unauthorized />} /> <Route path="/pos" element={<PosPage />} />
 
       {/* Các trang cần đăng nhập */}
       <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
