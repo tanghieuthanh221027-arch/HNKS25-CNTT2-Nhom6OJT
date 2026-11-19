@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+﻿import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { QRCodeSVG } from "qrcode.react";D
+import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 
 const memberStyles = `.member-page {
@@ -530,48 +530,19 @@ const MemberPage = () => {
               </div>
 
               <div className="member-actions">
-                <a className="member-primary-button" href="#member-pass">
-                  <span className="material-symbols-outlined">
-                    qr_code_scanner
-                  </span>
-                  Mở thẻ check-in
-                </a>
-                <a className="member-secondary-button" href="#schedule">
-                  <span className="material-symbols-outlined">
-                    event_available
-                  </span>
-                  Xem lịch tập
-                </a>
-                <Link className="member-secondary-button" to="/membership">
-                  <span className="material-symbols-outlined">credit_card</span>
-                  Khám phá gói tập
-                </Link>
+                <Link className="member-primary-button" to="/member/check-in"><span className="material-symbols-outlined">qr_code_scanner</span>Mở trang điểm danh QR</Link>
+                <Link className="member-secondary-button" to="/member/book-pt"><span className="material-symbols-outlined">event_available</span>Đăng ký lịch tập với PT</Link>
+                <a className="member-secondary-button" href="#schedule"><span className="material-symbols-outlined">event_available</span>Xem lịch tập</a>
+                <Link className="member-secondary-button" to="/membership"><span className="material-symbols-outlined">credit_card</span>Khám phá gói tập</Link>
               </div>
             </div>
 
             {/* 3. Khu vực tạo mã QR thật tự động theo memberCode */}
             <aside className="member-pass-card" id="member-pass">
-              <div className="member-pass-heading">
-                <span>THẺ HỘI VIÊN ĐIỆN TỬ</span>
-                <span className="member-online">
-                  <i /> SẴN SÀNG
-                </span>
-              </div>
-              <div
-                className="member-qr"
-                aria-label={`Mã QR check-in của ${memberCode}`}
-              >
-                <QRCodeSVG
-                  value={memberCode}
-                  size={160}
-                  bgColor="#ffffff"
-                  fgColor="#0b1326"
-                  level="H"
-                  includeMargin={false}
-                />
-                <span className="member-qr-logo material-symbols-outlined">
-                  fitness_center
-                </span>
+              <div className="member-pass-heading"><span>THẺ HỘI VIÊN ĐIỆN TỬ</span><span className="member-online"><i /> SẴN SÀNG</span></div>
+              <div className="member-qr" aria-label={`Mã QR check-in của ${memberCode}`}>
+                <QRCodeSVG value={memberCode} size={148} bgColor="#ffffff" fgColor="#111827" level="H" />
+                <span className="member-qr-logo material-symbols-outlined">fitness_center</span>
               </div>
               <p>Đưa mã này cho nhân viên khi check-in</p>
               <b>{memberCode}</b>

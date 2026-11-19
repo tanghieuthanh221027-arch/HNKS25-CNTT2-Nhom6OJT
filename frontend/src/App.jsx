@@ -11,6 +11,7 @@ import Unauthorized from "./pages/Unauthorized";
 import HomePage from "./pages/HomePage";
 import MembershipPage from "./pages/MembershipPage";
 import CheckInPage from "./pages/CheckInPage";
+import PTBookingPage from "./pages/PTBookingPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -32,6 +33,7 @@ function App() {
         <Route path="/member" element={<MemberPage />} />
         <Route path="/member/profile" element={<MemberProfilePage />} />
         <Route path="/member/check-in" element={<CheckInPage />} />
+        <Route path="/member/book-pt" element={<PTBookingPage />} />
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={["PT"]} />}>
