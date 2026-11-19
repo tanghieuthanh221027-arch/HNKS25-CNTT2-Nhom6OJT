@@ -1,3 +1,5 @@
+"""Model lưu thông báo gửi đến người dùng."""
+
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, ForeignKey, Index, Integer, String, Text, false
@@ -12,6 +14,8 @@ if TYPE_CHECKING:
 
 
 class Notification(Base, CreatedAtMixin):
+    """Lưu nội dung, loại thông báo và trạng thái đã đọc."""
+
     __tablename__ = "notifications"
     __table_args__ = (
         Index("ix_notifications_user_read", "user_id", "is_read"),

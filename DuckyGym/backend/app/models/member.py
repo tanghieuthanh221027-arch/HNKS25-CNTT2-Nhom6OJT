@@ -1,3 +1,5 @@
+"""Model lưu hồ sơ hội viên."""
+
 from datetime import date
 from typing import TYPE_CHECKING, Optional
 
@@ -19,6 +21,8 @@ if TYPE_CHECKING:
 
 
 class Member(Base, TimestampMixin):
+    """Lưu thông tin cá nhân; user_id có thể để trống nếu chưa có tài khoản."""
+
     __tablename__ = "members"
     __table_args__ = (
         Index("ix_members_full_name", "full_name"),
@@ -35,8 +39,8 @@ class Member(Base, TimestampMixin):
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)
     gender: Mapped[Gender] = mapped_column(enum_column(Gender, 10), nullable=False)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
-    phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
-    email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    phone: Mapped[str] = mapped_column(String(20), nullable=False)
+    email: Mapped[str] = mapped_column(String(100), nullable=False)
     address: Mapped[str] = mapped_column(String(255), nullable=False)
     join_date: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)
     status: Mapped[MemberStatus] = mapped_column(

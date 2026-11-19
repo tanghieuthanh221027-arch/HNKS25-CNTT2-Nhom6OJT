@@ -1,3 +1,5 @@
+"""Model lưu các giao dịch thanh toán của hóa đơn."""
+
 from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
@@ -14,6 +16,8 @@ if TYPE_CHECKING:
 
 
 class Payment(Base):
+    """Mỗi bản ghi lưu một khoản thanh toán gắn với một hóa đơn."""
+
     __tablename__ = "payments"
     __table_args__ = (
         CheckConstraint("amount > 0", name="amount_positive"),
@@ -47,7 +51,7 @@ class Payment(Base):
         enum_column(PaymentStatus, 20), nullable=False, default=PaymentStatus.PENDING
     )
     transaction_code: Mapped[Optional[str]] = mapped_column(
-        String(100), nullable=True, unique=True
+        String(100), nullable=True
     )
 
     invoice: Mapped["Invoice"] = relationship(back_populates="payments")

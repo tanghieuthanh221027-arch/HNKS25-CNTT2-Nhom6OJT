@@ -1,3 +1,5 @@
+"""Đăng ký các model SRS để SQLAlchemy tạo metadata đầy đủ."""
+
 from app.models.attendance_record import AttendanceRecord
 from app.models.audit_log import AuditLog
 from app.models.feedback import Feedback

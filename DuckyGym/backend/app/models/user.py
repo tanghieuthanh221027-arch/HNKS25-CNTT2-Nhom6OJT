@@ -1,3 +1,5 @@
+"""Model lưu tài khoản nhân viên, huấn luyện viên và hội viên."""
+
 from datetime import date
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
@@ -23,6 +25,8 @@ if TYPE_CHECKING:
 
 
 class User(Base, TimestampMixin):
+    """Lưu tài khoản chung; thông tin chuyên môn chỉ dùng cho PT."""
+
     __tablename__ = "users"
     __table_args__ = (
         Index("ix_users_role_status", "role", "status"),
@@ -32,8 +36,8 @@ class User(Base, TimestampMixin):
     username: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+    email: Mapped[str] = mapped_column(String(100), nullable=False)
+    phone: Mapped[str] = mapped_column(String(20), nullable=False)
     role: Mapped[UserRole] = mapped_column(
         enum_column(UserRole, 20), nullable=False, default=UserRole.MEMBER
     )

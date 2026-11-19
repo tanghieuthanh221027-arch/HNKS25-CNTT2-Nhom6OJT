@@ -1,3 +1,5 @@
+"""Model lưu đánh giá và khiếu nại của hội viên."""
+
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
@@ -19,6 +21,8 @@ if TYPE_CHECKING:
 
 
 class Feedback(Base, CreatedAtMixin):
+    """Lưu nội dung phản hồi và người tiếp nhận xử lý."""
+
     __tablename__ = "feedbacks"
     __table_args__ = (
         CheckConstraint(

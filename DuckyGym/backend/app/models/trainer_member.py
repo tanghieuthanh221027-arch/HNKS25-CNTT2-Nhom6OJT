@@ -1,3 +1,5 @@
+"""Model lưu phân công huấn luyện viên cho hội viên."""
+
 from datetime import date
 from typing import TYPE_CHECKING, Optional
 
@@ -13,6 +15,8 @@ if TYPE_CHECKING:
 
 
 class TrainerMember(Base):
+    """Liên kết tài khoản PT với hồ sơ hội viên được phân công."""
+
     __tablename__ = "trainer_members"
     __table_args__ = (
         CheckConstraint(

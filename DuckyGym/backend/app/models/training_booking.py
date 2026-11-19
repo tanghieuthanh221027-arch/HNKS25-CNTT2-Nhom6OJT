@@ -1,3 +1,5 @@
+"""Model lưu lịch tập hội viên đặt với huấn luyện viên."""
+
 from datetime import date, time
 from typing import TYPE_CHECKING
 
@@ -15,6 +17,8 @@ if TYPE_CHECKING:
 
 
 class TrainingBooking(Base, CreatedAtMixin):
+    """Liên kết hội viên, PT và lịch làm việc được chọn."""
+
     __tablename__ = "training_bookings"
     __table_args__ = (
         CheckConstraint("end_time > start_time", name="ck_training_bookings_time_range"),

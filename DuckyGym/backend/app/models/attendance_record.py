@@ -1,3 +1,5 @@
+"""Model điểm danh hội viên theo bảng attendance_records trong SRS."""
+
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
@@ -14,6 +16,8 @@ if TYPE_CHECKING:
 
 
 class AttendanceRecord(Base):
+    """Lưu lượt vào/ra và các tài khoản liên quan."""
+
     __tablename__ = "attendance_records"
     __table_args__ = (
         CheckConstraint(
@@ -50,6 +54,7 @@ class AttendanceRecord(Base):
         DateTime, nullable=False, default=datetime.now
     )
     check_out: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # Trạng thái lưu trong CSDL dùng chính các giá trị đã liệt kê trong SRS.
     status: Mapped[AttendanceStatus] = mapped_column(
         enum_column(AttendanceStatus, 20),
         nullable=False,

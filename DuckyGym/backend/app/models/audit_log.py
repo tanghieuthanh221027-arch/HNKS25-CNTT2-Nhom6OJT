@@ -1,3 +1,5 @@
+"""Model lưu nhật ký thao tác quan trọng của hệ thống."""
+
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import ForeignKey, Index, Integer, String, Text
@@ -11,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class AuditLog(Base, CreatedAtMixin):
+    """Ghi người thao tác cùng dữ liệu trước và sau khi thay đổi."""
+
     __tablename__ = "audit_logs"
     __table_args__ = (
         Index("ix_audit_logs_entity", "entity_name", "entity_id"),

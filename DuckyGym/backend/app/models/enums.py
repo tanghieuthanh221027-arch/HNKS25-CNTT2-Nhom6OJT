@@ -1,3 +1,5 @@
+"""Các giá trị vai trò và trạng thái được mô tả trong SRS."""
+
 import enum
 from typing import Type
 
@@ -135,6 +137,7 @@ BOOKING_TRANSITIONS: dict[BookingStatus, set[BookingStatus]] = {
     BookingStatus.CANCELLED: set(),
 }
 
+# Chỉ cho phép chuyển trạng thái theo đúng luồng xử lý phản hồi.
 FEEDBACK_TRANSITIONS: dict[FeedbackStatus, set[FeedbackStatus]] = {
     FeedbackStatus.PENDING: {FeedbackStatus.PROCESSING, FeedbackStatus.REJECTED},
     FeedbackStatus.PROCESSING: {FeedbackStatus.RESOLVED, FeedbackStatus.REJECTED},
@@ -152,6 +155,7 @@ INVOICE_TRANSITIONS: dict[InvoiceStatus, set[InvoiceStatus]] = {
 
 
 def enum_column(enum_cls: Type[enum.Enum], length: int) -> SAEnum:
+    """Lưu enum dưới dạng VARCHAR bằng giá trị khai báo trong SRS."""
     return SAEnum(
         enum_cls,
         native_enum=False,

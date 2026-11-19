@@ -1,3 +1,5 @@
+"""Model lưu đăng ký gói tập và liên kết gia hạn/nâng cấp."""
+
 from datetime import date
 from typing import TYPE_CHECKING, Optional
 
@@ -16,6 +18,8 @@ if TYPE_CHECKING:
 
 
 class Subscription(Base, TimestampMixin):
+    """Lưu gói đang dùng và tham chiếu đăng ký trước nếu có."""
+
     __tablename__ = "subscriptions"
     __table_args__ = (
         CheckConstraint("end_date >= start_date", name="ck_subscriptions_date_range"),

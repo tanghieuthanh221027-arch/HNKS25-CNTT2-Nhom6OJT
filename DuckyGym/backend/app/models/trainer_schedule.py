@@ -1,3 +1,5 @@
+"""Model lưu lịch làm việc của huấn luyện viên."""
+
 from datetime import date, time
 from typing import TYPE_CHECKING
 
@@ -13,6 +15,8 @@ if TYPE_CHECKING:
 
 
 class TrainerSchedule(Base):
+    """Lưu ngày và khung giờ làm việc của một PT."""
+
     __tablename__ = "trainer_schedules"
     __table_args__ = (
         CheckConstraint("end_time > start_time", name="ck_trainer_schedules_time_range"),

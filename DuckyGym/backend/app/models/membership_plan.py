@@ -1,3 +1,5 @@
+"""Model lưu các gói hội viên của phòng tập."""
+
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
@@ -13,6 +15,8 @@ if TYPE_CHECKING:
 
 
 class MembershipPlan(Base, TimestampMixin):
+    """Lưu tên, loại, thời hạn, giá và trạng thái của gói tập."""
+
     __tablename__ = "membership_plans"
     __table_args__ = (
         CheckConstraint("duration_days > 0", name="duration_positive"),
@@ -21,7 +25,7 @@ class MembershipPlan(Base, TimestampMixin):
     )
 
     plan_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    plan_name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    plan_name: Mapped[str] = mapped_column(String(100), nullable=False)
     category: Mapped[str] = mapped_column(String(100), nullable=False)
     duration_days: Mapped[int] = mapped_column(Integer, nullable=False)
     price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)

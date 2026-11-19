@@ -1,3 +1,5 @@
+"""Model lưu hóa đơn của hội viên."""
+
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -16,6 +18,8 @@ if TYPE_CHECKING:
 
 
 class Invoice(Base, TimestampMixin):
+    """Liên kết hội viên, gói đăng ký, người lập hóa đơn và các khoản thanh toán."""
+
     __tablename__ = "invoices"
     __table_args__ = (
         CheckConstraint("total_amount >= 0", name="total_non_negative"),
