@@ -46,7 +46,7 @@ export default function PosPage() {
           id: 101,
           full_name: 'Nguyễn Văn An',
           phone: phone,
-          current_plan: 'Hội viên FITZONE',
+          current_plan: 'Hội viên DUCKY GYM',
         });
       } else {
         setMember(null);
@@ -122,17 +122,36 @@ export default function PosPage() {
         {/* HEADER */}
         <header className="pos-header">
           <div className="pos-brand">
-            <div className="pos-logo-badge">FZ</div>
-            <span className="pos-brand-name">FITZONE</span>
+            <svg
+              className="pos-dumbbell-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m6.5 6.5 11 11" />
+              <path d="m21 21-1-1" />
+              <path d="m3 3 1 1" />
+              <path d="m18 22 4-4" />
+              <path d="m2 6 4-4" />
+              <path d="m3 10 7-7" />
+              <path d="m14 21 7-7" />
+            </svg>
+            <span className="pos-brand-name">DUCKY GYM</span>
           </div>
           <nav className="pos-nav">
-            <span>Trang Chủ</span>
-            <span>Gói Tập</span>
-            <span>Huấn Luyện Viên</span>
+            <span>Thiết bị</span>
+            <span>Huấn luyện viên</span>
+            <span>Bảng giá</span>
           </nav>
-          <button type="button" className="pos-btn-orange">
-            Đăng Ký
-          </button>
+          <div className="pos-header-actions">
+            <span className="pos-login-link">Đăng nhập</span>
+            <button type="button" className="pos-btn-orange">
+              ĐĂNG KÝ
+            </button>
+          </div>
         </header>
 
         <h1 className="pos-title">QUẦY LỄ TÂN - BÁN GÓI TẬP (POS)</h1>
@@ -304,7 +323,7 @@ export default function PosPage() {
           <div className="pos-modal-overlay">
             <div id="printable-invoice" className="pos-invoice-box">
               <div className="pos-invoice-header">
-                <div className="pos-invoice-logo">FITZONE</div>
+                <div className="pos-invoice-logo">DUCKY GYM</div>
                 <h3 className="pos-invoice-title">HÓA ĐƠN THANH TOÁN DỊCH VỤ</h3>
                 <p className="pos-invoice-status">✓ THANH TOÁN THÀNH CÔNG</p>
               </div>

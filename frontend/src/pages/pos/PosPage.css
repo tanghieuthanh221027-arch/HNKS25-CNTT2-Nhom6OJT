@@ -29,6 +29,30 @@
   gap: 10px;
 }
 
+.pos-dumbbell-icon {
+  width: 24px;
+  height: 24px;
+  color: #f97316;
+  flex-shrink: 0;
+}
+
+.pos-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.pos-login-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.pos-login-link:hover {
+  color: #ffffff;
+}
+
 .pos-logo-badge {
   background-color: #f97316;
   color: #ffffff;
