@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -15,10 +13,12 @@ def get_membership_plans(
     filters: PlanFilter,
     page_params: PageParams,
 ) -> tuple[list[MembershipPlan], int]:
-    """Lấy danh sách gói đang kinh doanh, hỗ trợ tìm kiếm, lọc và phân trang."""
-    query = db.query(MembershipPlan).filter(
-        MembershipPlan.status == PlanStatus.ACTIVE
-    )
+    """Lấy danh sách gói tập, hỗ trợ tìm kiếm, lọc và phân trang."""
+    query = db.query(MembershipPlan)
+    if filters.status is not None:
+        query = query.filter(MembershipPlan.status == filters.status)
+    elif not filters.include_all:
+        query = query.filter(MembershipPlan.status == PlanStatus.ACTIVE)
 
     if filters.keyword:
         keyword = filters.keyword.strip()
@@ -35,7 +35,7 @@ def get_membership_plans(
 
     total = query.count()
     items = (
-        query.order_by(MembershipPlan.plan_id.desc())
+        query.order_by(MembershipPlan.price.asc(), MembershipPlan.plan_id.asc())
         .offset(page_params.offset)
         .limit(page_params.size)
         .all()
@@ -44,23 +44,21 @@ def get_membership_plans(
 
 
 def get_membership_plan_by_id(db: Session, plan_id: int) -> MembershipPlan:
-    """Lấy chi tiết theo ID; vẫn cho phép xem gói đã ngừng kinh doanh."""
-    plan = db.query(MembershipPlan).filter(
-        MembershipPlan.plan_id == plan_id
-    ).first()
-
+    plan = db.query(MembershipPlan).filter(MembershipPlan.plan_id == plan_id).first()
     if plan is None:
         raise NotFoundException(message=f"Không tìm thấy gói tập có ID {plan_id}.")
-
     return plan
 
 
 def create_membership_plan(db: Session, plan_data: PlanCreate) -> MembershipPlan:
-    """Tạo gói tập mới."""
-    existing_plan = db.query(MembershipPlan).filter(
-        MembershipPlan.plan_name == plan_data.plan_name
-    ).first()
+    if plan_data.price <= 0:
+        raise BusinessRuleException(message="Giá gói tập phải lớn hơn 0.")
 
+    existing_plan = (
+        db.query(MembershipPlan)
+        .filter(MembershipPlan.plan_name == plan_data.plan_name)
+        .first()
+    )
     if existing_plan:
         raise ConflictException(message="Tên gói tập đã tồn tại.")
 
@@ -82,17 +80,18 @@ def update_membership_plan(
     plan_id: int,
     plan_data: PlanUpdate,
 ) -> MembershipPlan:
-    """Cập nhật các trường được gửi lên; không cập nhật status tại API này."""
     plan = get_membership_plan_by_id(db, plan_id)
     update_data = plan_data.model_dump(exclude_unset=True)
 
-    # Các cột này không nullable trong Model của nhóm.
     for field in ("plan_name", "category", "duration_days", "price"):
         if field in update_data and update_data[field] is None:
             raise BusinessRuleException(
                 message=f"Trường {field} không được để trống.",
                 rule_code="INVALID_PLAN_FIELD",
             )
+
+    if "price" in update_data and update_data["price"] <= 0:
+        raise BusinessRuleException(message="Giá gói tập phải lớn hơn 0.")
 
     if "plan_name" in update_data:
         duplicated_plan = (
@@ -120,19 +119,12 @@ def update_membership_plan(
 
 
 def discontinue_membership_plan(db: Session, plan_id: int) -> MembershipPlan:
-    """Ngừng kinh doanh gói tập (soft delete), không xóa bản ghi khỏi CSDL."""
     plan = get_membership_plan_by_id(db, plan_id)
-
-    if plan.status == PlanStatus.DISCONTINUED:
-        return plan
-
     plan.status = PlanStatus.DISCONTINUED
-
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
         raise ConflictException(message="Không thể ngừng kinh doanh gói tập này.")
-
     db.refresh(plan)
     return plan

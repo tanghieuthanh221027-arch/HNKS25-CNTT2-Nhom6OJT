@@ -1,28 +1,22 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from getpass import getpass
 
-from sqlalchemy import select
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL, make_url
+from sqlalchemy import or_, text
 from sqlalchemy.orm import Session
 
+from app.core.qr_utils import generate_card_code, generate_qr_base64
 from app.core.security import hash_password
-from app.db.init_db import create_tables
-from app.core.config import settings
+from app.db.base import Base
+from app.db.database import SessionLocal, engine
 from app.models.attendance_record import AttendanceRecord
-from app.models.audit_log import AuditLog
-from app.models.equipment import Equipment
+from app.models.body_metric import BodyMetric
+from app.models.discount import Discount
 from app.models.enums import (
-    AssignmentStatus,
     AttendanceStatus,
     BookingStatus,
-    FeedbackStatus,
-    FeedbackType,
     Gender,
     InvoiceStatus,
     MemberStatus,
-    NotificationType,
     PaymentMethod,
     PaymentStatus,
     PlanStatus,
@@ -32,550 +26,627 @@ from app.models.enums import (
     UserRole,
     UserStatus,
 )
-from app.models.feedback import Feedback
+from app.models.equipment import Equipment
+from app.models.group_class import GroupClass, GroupClassEnrollment
 from app.models.invoice import Invoice
 from app.models.member import Member
+from app.models.member_card import MemberCard
 from app.models.membership_plan import MembershipPlan
-from app.models.notification import Notification
 from app.models.payment import Payment
 from app.models.subscription import Subscription
-from app.models.trainer_member import TrainerMember
 from app.models.trainer_schedule import TrainerSchedule
 from app.models.training_booking import TrainingBooking
 from app.models.user import User
 
-PLANS = (
-    {
-        "plan_name": "Goi Co Ban 1 Thang",
-        "category": "Co ban",
-        "duration_days": 30,
-        "price": 500_000,
-        "description": "Quyen tap gym trong 1 thang.",
-    },
-    {
-        "plan_name": "Goi Tieu Chuan 3 Thang",
-        "category": "Tieu chuan",
-        "duration_days": 90,
-        "price": 1_300_000,
-        "description": "Quyen tap gym trong 3 thang.",
-    },
-    {
-        "plan_name": "Goi Nang Cao 6 Thang",
-        "category": "Nang cao",
-        "duration_days": 180,
-        "price": 2_400_000,
-        "description": "Quyen tap gym trong 6 thang.",
-    },
-    {
-        "plan_name": "Goi Premium 12 Thang",
-        "category": "Premium",
-        "duration_days": 365,
-        "price": 4_200_000,
-        "description": "Quyen tap gym va cac tien ich premium trong 12 thang.",
-    },
-    {
-        "plan_name": "Goi PT 10 Buoi",
-        "category": "PT",
-        "duration_days": 60,
-        "price": 3_000_000,
-        "description": "10 buoi tap cung huan luyen vien ca nhan.",
-    },
-)
 
-EQUIPMENT = (
-    ("EQ-001", "May chay bo", "Cardio", "Technogym"),
-    ("EQ-002", "Xe dap tap", "Cardio", "Technogym"),
-    ("EQ-003", "May elliptical", "Cardio", "Life Fitness"),
-    ("EQ-004", "May rowing", "Cardio", "Concept2"),
-    ("EQ-005", "Gian ta da nang", "Strength", "Rogue"),
-    ("EQ-006", "May day nguc", "Strength", "Life Fitness"),
-    ("EQ-007", "May keo xo", "Strength", "Technogym"),
-    ("EQ-008", "May leg press", "Strength", "Hammer Strength"),
-    ("EQ-009", "Gian ta don", "Free weights", "Rogue"),
-    ("EQ-010", "May cap kickback", "Strength", "Technogym"),
-)
-
-MEMBER_NAMES = (
-    "Nguyen Minh Anh",
-    "Tran Hoang Nam",
-    "Le Thu Ha",
-    "Pham Quoc Bao",
-    "Hoang Ngoc Mai",
-    "Vo Duc Huy",
-    "Dang Thanh Thao",
-    "Bui Gia Khanh",
-    "Do Phuong Linh",
-    "Ngo Tuan Kiet",
-    "Duong Bao Chau",
-    "Ly Thanh Tung",
-    "Truong Khanh Vy",
-    "Mai Hoang Long",
-    "Cao Ngoc Han",
-    "Vu Anh Tuan",
-    "Dinh My Duyen",
-    "Phan Nhat Minh",
-    "Ta Thu Trang",
-    "Chau Van Khoa",
-)
-
-TRAINERS = (
-    ("pt_tuan_anh", "Tuấn Anh", "pt.tuananh@duckygym.local", "0911000001",
-     "Strength training", 8),
-    ("pt_mai_linh", "Mai Linh", "pt.mailinh@duckygym.local", "0911000002",
-     "Yoga and nutrition", 6),
-    ("pt_quoc_bao", "Quốc Bảo", "pt.quocbao@duckygym.local", "0911000003",
-     "Boxing and conditioning", 7),
-)
-
-TEST_ACCOUNTS = (
-    {
-        "username": "admin",
-        "password": "Admin123",
-        "full_name": "System Administrator",
-        "email": "admin@duckygym.local",
-        "phone": "0900000000",
-        "role": UserRole.ADMIN,
-        "position": "Administrator",
-    },
-    {
-        "username": "le_tan",
-        "password": "Receptionist123",
-        "full_name": "Nhan vien le tan",
-        "email": "receptionist@duckygym.local",
-        "phone": "0900000001",
-        "role": UserRole.STAFF,
-        "position": "Le tan",
-    },
-)
+def ensure_sql_views(db: Session) -> None:
+    """Tạo các SQL Views thống kê doanh thu, top gói tập và hội viên mới (Task T067D16)."""
+    views = [
+        """
+        CREATE OR REPLACE VIEW vw_daily_revenue AS
+        SELECT
+            DATE(i.created_at) AS revenue_date,
+            COUNT(i.invoice_id) AS invoice_count,
+            COALESCE(SUM(i.total_amount), 0) AS gross_revenue,
+            COALESCE(SUM(i.discount_amount), 0) AS total_discount,
+            COALESCE(SUM(i.final_amount), 0) AS net_revenue
+        FROM invoices i
+        WHERE i.status = 'PAID'
+        GROUP BY DATE(i.created_at)
+        ORDER BY revenue_date DESC
+        """,
+        """
+        CREATE OR REPLACE VIEW vw_monthly_revenue AS
+        SELECT
+            DATE_FORMAT(i.created_at, '%Y-%m') AS revenue_month,
+            COUNT(i.invoice_id) AS invoice_count,
+            COALESCE(SUM(i.total_amount), 0) AS gross_revenue,
+            COALESCE(SUM(i.discount_amount), 0) AS total_discount,
+            COALESCE(SUM(i.final_amount), 0) AS net_revenue
+        FROM invoices i
+        WHERE i.status = 'PAID'
+        GROUP BY DATE_FORMAT(i.created_at, '%Y-%m')
+        ORDER BY revenue_month DESC
+        """,
+        """
+        CREATE OR REPLACE VIEW vw_top_gym_plans AS
+        SELECT
+            mp.plan_id,
+            mp.plan_name,
+            mp.category,
+            mp.duration_days,
+            mp.price,
+            COUNT(s.subscription_id) AS total_subscriptions,
+            SUM(CASE WHEN s.status = 'ACTIVE' THEN 1 ELSE 0 END) AS active_subscriptions,
+            COALESCE(SUM(CASE WHEN i.status = 'PAID' THEN i.final_amount ELSE 0 END), 0) AS total_revenue
+        FROM membership_plans mp
+        LEFT JOIN subscriptions s ON s.plan_id = mp.plan_id
+        LEFT JOIN invoices i ON i.subscription_id = s.subscription_id
+        GROUP BY mp.plan_id, mp.plan_name, mp.category, mp.duration_days, mp.price
+        ORDER BY total_subscriptions DESC, total_revenue DESC
+        """,
+        """
+        CREATE OR REPLACE VIEW vw_monthly_new_members AS
+        SELECT
+            DATE_FORMAT(m.join_date, '%Y-%m') AS join_month,
+            COUNT(m.member_id) AS new_members_count
+        FROM members m
+        GROUP BY DATE_FORMAT(m.join_date, '%Y-%m')
+        ORDER BY join_month DESC
+        """,
+    ]
+    for view_sql in views:
+        try:
+            db.execute(text(view_sql))
+            db.commit()
+        except Exception:
+            db.rollback()
 
 
-def seed_data(db: Session) -> dict[str, int]:
-    """Insert missing sample records; stable natural keys make reruns idempotent."""
-    inserted = {
-        "plans": 0,
-        "members": 0,
-        "equipment": 0,
-        "trainers": 0,
-        "accounts": 0,
-        "subscriptions": 0,
-        "invoices": 0,
-        "payments": 0,
-        "trainer_schedules": 0,
-        "trainer_members": 0,
-        "training_bookings": 0,
-        "attendance_records": 0,
-        "feedbacks": 0,
-        "notifications": 0,
-        "audit_logs": 0,
-    }
-
-    for data in PLANS:
-        exists = db.scalar(
-            select(MembershipPlan.plan_id).where(
-                MembershipPlan.plan_name == data["plan_name"]
+def _upsert_user(
+    db: Session,
+    username: str,
+    email: str,
+    phone: str,
+    full_name: str,
+    password_hash: str,
+    role: UserRole,
+    **extra_fields,
+) -> User:
+    """Tìm hoặc tạo mới User an toàn (không bị lỗi trùng username/email/phone)."""
+    user = (
+        db.query(User)
+        .filter(
+            or_(
+                User.username == username,
+                User.email == email,
+                User.phone == phone,
             )
         )
-        if exists is None:
-            db.add(MembershipPlan(**data, status=PlanStatus.ACTIVE))
-            inserted["plans"] += 1
-
-    for index, full_name in enumerate(MEMBER_NAMES, start=1):
-        email = f"member{index:02d}@duckygym.local"
-        exists = db.scalar(select(Member.member_id).where(Member.email == email))
-        if exists is None:
-            db.add(
-                Member(
-                    full_name=full_name,
-                    gender=Gender.OTHER,
-                    date_of_birth=date(1985 + (index % 15), (index % 12) + 1, 15),
-                    phone=f"093{index:07d}",
-                    card_code=f"DG-SEED-{index:04d}",
-                    email=email,
-                    address=f"So {index} Duong Mau, Ha Noi",
-                    join_date=date.today() - timedelta(days=index),
-                    status=MemberStatus.ACTIVE,
-                )
-            )
-            inserted["members"] += 1
-
-    for code, name, category, brand in EQUIPMENT:
-        exists = db.scalar(
-            select(Equipment.equipment_id).where(Equipment.equipment_code == code)
+        .first()
+    )
+    if not user:
+        user = User(
+            username=username,
+            password_hash=password_hash,
+            full_name=full_name,
+            email=email,
+            phone=phone,
+            role=role,
+            status=UserStatus.ACTIVE,
+            **extra_fields,
         )
-        if exists is None:
-            db.add(
-                Equipment(
-                    equipment_code=code,
-                    equipment_name=name,
-                    category=category,
-                    brand=brand,
-                    status="ACTIVE",
-                )
-            )
-            inserted["equipment"] += 1
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    else:
+        # Đảm bảo mật khẩu và trạng thái khớp với tài khoản seed để đăng nhập được ngay
+        user.password_hash = password_hash
+        user.status = UserStatus.ACTIVE
+        if user.username == "admin" and user.email == "admin@duckygym.local":
+            user.email = "admin@duckygym.vn"
+        db.commit()
+        db.refresh(user)
+    return user
 
-    for username, full_name, email, phone, specialization, experience in TRAINERS:
-        exists = db.scalar(select(User.user_id).where(User.username == username))
-        if exists is None:
-            db.add(
-                User(
-                    username=username,
-                    password_hash=hash_password("Trainer123"),
-                    full_name=full_name,
-                    email=email,
-                    phone=phone,
-                    role=UserRole.TRAINER,
-                    status=UserStatus.ACTIVE,
-                    position="Personal Trainer",
-                    hire_date=date(2020, 1, 1),
-                    specialization=specialization,
-                    experience_years=experience,
-                    bio=f"Huấn luyện viên {specialization}.",
-                )
-            )
-            inserted["trainers"] += 1
 
-    for account in TEST_ACCOUNTS:
-        exists = db.scalar(
-            select(User.user_id).where(User.username == account["username"])
-        )
-        if exists is None:
-            db.add(
-                User(
-                    username=account["username"],
-                    password_hash=hash_password(account["password"]),
-                    full_name=account["full_name"],
-                    email=account["email"],
-                    phone=account["phone"],
-                    role=account["role"],
-                    status=UserStatus.ACTIVE,
-                    position=account["position"],
-                )
-            )
-            inserted["accounts"] += 1
-
-    db.flush()
-    plans_by_name = {
-        plan.plan_name: plan for plan in db.scalars(select(MembershipPlan))
-    }
-    members_by_email = {member.email: member for member in db.scalars(select(Member))}
-    users_by_name = {user.username: user for user in db.scalars(select(User))}
+def seed_all(db: Session) -> dict[str, int]:
+    """
+    Seed dữ liệu mẫu chuẩn Idempotent (Task T067CD7):
+    - 2 tài khoản quản trị & lễ tân (admin, lễ tân)
+    - 3 PT (Huấn luyện viên cá nhân)
+    - 5 Gói tập (Gym Plans)
+    - 20 Hội viên (Members + MemberCards + Subscriptions + Invoices + Check-ins)
+    - 10 Thiết bị phòng gym (Equipment + lịch bảo trì)
+    - 4 Mã giảm giá (Discounts)
+    - 4 Lớp tập nhóm (Group Classes)
+    """
+    Base.metadata.create_all(bind=engine)
+    ensure_sql_views(db)
 
     today = date.today()
-    subscriptions_by_member: dict[int, Subscription] = {}
-    for index in range(1, len(MEMBER_NAMES) + 1):
-        member = members_by_email[f"member{index:02d}@duckygym.local"]
-        plan_data = PLANS[(index - 1) % len(PLANS)]
-        plan = plans_by_name[plan_data["plan_name"]]
-        start_date = today - timedelta(days=5)
-        subscription = db.scalar(
-            select(Subscription).where(
-                Subscription.member_id == member.member_id,
-                Subscription.plan_id == plan.plan_id,
-                Subscription.subscription_type == SubscriptionType.NEW,
-            )
+    default_pw = hash_password("Admin123")
+    staff_pw = hash_password("Staff123")
+    pt_pw = hash_password("Trainer123")
+    member_pw = hash_password("Member123")
+
+    # 1. Seed Admin & Lễ tân (STAFF)
+    admin_user = _upsert_user(
+        db,
+        username="admin",
+        email="admin@duckygym.vn",
+        phone="0900000000",
+        full_name="Quản trị viên DuckyGym",
+        password_hash=default_pw,
+        role=UserRole.ADMIN,
+        position="Quản lý hệ thống",
+        hire_date=today - timedelta(days=365),
+        salary=Decimal("25000000.00"),
+    )
+
+    staff_user = _upsert_user(
+        db,
+        username="letan",
+        email="staff@duckygym.vn",
+        phone="0900000001",
+        full_name="Nguyễn Thu Hà (Lễ tân)",
+        password_hash=staff_pw,
+        role=UserRole.STAFF,
+        position="Lễ tân & Thu ngân POS",
+        hire_date=today - timedelta(days=200),
+        salary=Decimal("10500000.00"),
+    )
+
+    # 2. Seed 3 PT (Huấn luyện viên)
+    pt_specs = [
+        (
+            "pt_tuananh",
+            "Trần Tuấn Anh",
+            "pt@duckygym.vn",
+            "0902000001",
+            "Master Trainer · Thể hình & Tăng cơ",
+            8,
+            "Chứng chỉ NASM CPT quốc tế, 8 năm kinh nghiệm huấn luyện thể hình chuyên nghiệp.",
+        ),
+        (
+            "pt_mailinh",
+            "Nguyễn Mai Linh",
+            "mailinh.pt@duckygym.vn",
+            "0902000002",
+            "Chuyên gia Dinh dưỡng, Yoga & Pilates",
+            6,
+            "Chuyên gia giảm mỡ, phục hồi tư thế và thiết kế thực đơn dinh dưỡng cá nhân hóa.",
+        ),
+        (
+            "pt_quocbao",
+            "Lê Quốc Bảo",
+            "quocbao.pt@duckygym.vn",
+            "0902000003",
+            "Boxing, HIIT & Conditioning",
+            7,
+            "Cựu VĐV Boxing quốc gia, chuyên huấn luyện sức bền tim mạch và đốt mỡ cường độ cao.",
+        ),
+    ]
+    pt_users: list[User] = []
+    for uname, fname, email, phone, spec, exp, bio in pt_specs:
+        pt = _upsert_user(
+            db,
+            username=uname,
+            email=email,
+            phone=phone,
+            full_name=fname,
+            password_hash=pt_pw,
+            role=UserRole.TRAINER,
+            position="Personal Trainer",
+            hire_date=today - timedelta(days=180),
+            salary=Decimal("16000000.00"),
+            specialization=spec,
+            experience_years=exp,
+            bio=bio,
         )
-        is_unpaid = index % 4 == 0
-        if subscription is None:
-            subscription = Subscription(
-                member_id=member.member_id,
-                plan_id=plan.plan_id,
-                subscription_type=SubscriptionType.NEW,
-                start_date=start_date,
-                end_date=start_date + timedelta(days=plan.duration_days),
-                status=(
-                    SubscriptionStatus.PENDING
-                    if is_unpaid
-                    else SubscriptionStatus.ACTIVE
-                ),
-            )
-            db.add(subscription)
-            inserted["subscriptions"] += 1
-        subscriptions_by_member[member.member_id] = subscription
-    db.flush()
+        pt_users.append(pt)
 
-    invoices_by_member: dict[int, Invoice] = {}
-    for index in range(1, len(MEMBER_NAMES) + 1):
-        member = members_by_email[f"member{index:02d}@duckygym.local"]
-        subscription = subscriptions_by_member[member.member_id]
-        plan = plans_by_name[PLANS[(index - 1) % len(PLANS)]["plan_name"]]
-        invoice = db.scalar(
-            select(Invoice).where(Invoice.subscription_id == subscription.subscription_id)
-        )
-        if invoice is None:
-            amount = Decimal(plan.price)
-            invoice = Invoice(
-                member_id=member.member_id,
-                subscription_id=subscription.subscription_id,
-                created_by=users_by_name["admin"].user_id,
-                total_amount=amount,
-                discount_amount=Decimal("0.00"),
-                final_amount=amount,
-                status=(
-                    InvoiceStatus.UNPAID
-                    if index % 4 == 0
-                    else InvoiceStatus.PAID
-                ),
+    # 3. Seed 5 Gói tập (Gym Plans)
+    plan_specs = [
+        (
+            "Starter 1 Tháng",
+            "Gói Cơ Bản",
+            30,
+            Decimal("499000.00"),
+            "Tập luyện không giới hạn khung giờ, tủ đồ cá nhân, tặng 3 buổi PT định hướng.",
+        ),
+        (
+            "Pro Fitness 3 Tháng",
+            "Gói Tiêu Chuẩn",
+            90,
+            Decimal("1290000.00"),
+            "Full quyền lợi khu Cardio & Free Weights, đo InBody định kỳ hàng tháng.",
+        ),
+        (
+            "Pro Fitness 6 Tháng",
+            "Gói Phổ Biến",
+            180,
+            Decimal("2394000.00"),
+            "Tặng 7 ngày PT hướng dẫn, tham gia lớp Yoga & HIIT mỗi tuần, sử dụng khu Sauna đá muối.",
+        ),
+        (
+            "VIP Elite 12 Tháng",
+            "Gói Cao Cấp",
+            365,
+            Decimal("3840000.00"),
+            "Toàn bộ quyền lợi Pro, dẫn theo 1 bạn tập miễn phí cuối tuần, khăn tập & nước uống miễn phí.",
+        ),
+        (
+            "Coaching PT 1-1 (10 Buổi)",
+            "Gói Huấn Luyện Viên",
+            60,
+            Decimal("4500000.00"),
+            "10 buổi tập 1-1 độc quyền cùng Master Trainer, giáo án và thực đơn thiết kế riêng.",
+        ),
+    ]
+    plans: list[MembershipPlan] = []
+    for pname, cat, days, price, desc in plan_specs:
+        plan = db.query(MembershipPlan).filter(MembershipPlan.plan_name == pname).first()
+        if not plan:
+            plan = MembershipPlan(
+                plan_name=pname,
+                category=cat,
+                duration_days=days,
+                price=price,
+                description=desc,
+                status=PlanStatus.ACTIVE,
             )
-            db.add(invoice)
-            inserted["invoices"] += 1
-        invoices_by_member[member.member_id] = invoice
-    db.flush()
+            db.add(plan)
+            db.commit()
+            db.refresh(plan)
+        plans.append(plan)
 
-    receptionist_id = users_by_name["le_tan"].user_id
-    for index in range(1, len(MEMBER_NAMES) + 1):
-        member = members_by_email[f"member{index:02d}@duckygym.local"]
-        invoice = invoices_by_member[member.member_id]
-        if invoice.status == InvoiceStatus.UNPAID:
-            continue
-        transaction_code = f"SEED-PAY-{index:04d}"
-        payment_exists = db.scalar(
-            select(Payment.payment_id).where(
-                Payment.transaction_code == transaction_code
-            )
-        )
-        if payment_exists is None:
-            db.add(
-                Payment(
-                    invoice_id=invoice.invoice_id,
-                    received_by=receptionist_id,
-                    amount=invoice.final_amount,
-                    payment_method=(
-                        PaymentMethod.CASH
-                        if index % 2
-                        else PaymentMethod.BANK_TRANSFER
-                    ),
-                    payment_date=datetime.combine(today - timedelta(days=4), time(10, 0)),
-                    status=PaymentStatus.SUCCESS,
-                    transaction_code=transaction_code,
-                )
-            )
-            inserted["payments"] += 1
-    db.flush()
+    if not plans:
+        plans = db.query(MembershipPlan).all()
 
-    for index, (username, _name, _email, _phone, _specialization, _experience) in enumerate(
-        TRAINERS
-    ):
-        trainer_id = users_by_name[username].user_id
-        for day_offset in (1, 2, 3):
-            work_date = today + timedelta(days=day_offset)
-            start_time = time(8 + index * 3, 0)
-            schedule = db.scalar(
-                select(TrainerSchedule).where(
-                    TrainerSchedule.trainer_id == trainer_id,
-                    TrainerSchedule.work_date == work_date,
-                    TrainerSchedule.start_time == start_time,
-                )
+    # 4. Seed 10 Thiết bị phòng gym
+    equipment_specs = [
+        ("Máy chạy bộ Technogym Artis Run #01", "Khu Cardio", "HOAT_DONG", 30, 5),
+        ("Máy chạy bộ Technogym Artis Run #02", "Khu Cardio", "HOAT_DONG", 30, 18),
+        ("Xe đạp tập Assault AirBike Pro", "Khu Cardio", "BAO_TRI", 15, -1),
+        ("Giàn tạ đa năng Rogue Monster Rack", "Khu Free Weights", "HOAT_DONG", 45, 22),
+        ("Ghế đẩy ngực Olympic Bench Press", "Khu Free Weights", "HOAT_DONG", 30, 4),
+        ("Máy ép ngực Seated Chest Press Matrix", "Khu Máy Khối", "HOAT_DONG", 30, 12),
+        ("Máy kéo xô Lat Pulldown Technogym", "Khu Máy Khối", "HOAT_DONG", 30, 3),
+        ("Máy đạp đùi Leg Press 45 Độ", "Khu Chân & Mông", "HONG", 20, -2),
+        ("Khung kéo cáp đôi Functional Trainer", "Khu Functional", "HOAT_DONG", 30, 25),
+        ("Phòng xông hơi đá muối Himalaya", "Khu Recovery & Spa", "HOAT_DONG", 14, 6),
+    ]
+    for eq_name, zone, st, interval, due_offset in equipment_specs:
+        eq = db.query(Equipment).filter(Equipment.name == eq_name).first()
+        if not eq:
+            next_due = today + timedelta(days=due_offset)
+            last_maint = next_due - timedelta(days=interval)
+            eq = Equipment(
+                name=eq_name,
+                zone=zone,
+                status=st,
+                purchase_date=today - timedelta(days=300),
+                last_maintained_at=last_maint,
+                maintenance_interval_days=interval,
+                next_maintenance_date=next_due,
+                notes="Thiết bị chính hãng nhập khẩu, kiểm tra định kỳ theo tiêu chuẩn an toàn.",
             )
-            if schedule is None:
-                schedule = TrainerSchedule(
-                    trainer_id=trainer_id,
-                    work_date=work_date,
-                    start_time=start_time,
-                    end_time=time(start_time.hour + 1, 0),
-                    status=ScheduleStatus.ACTIVE,
-                )
-                db.add(schedule)
-                inserted["trainer_schedules"] += 1
-            db.flush()
+            db.add(eq)
+    db.commit()
 
-            member_index = (index * 3 + day_offset - 1) % len(MEMBER_NAMES) + 1
-            member = members_by_email[f"member{member_index:02d}@duckygym.local"]
-            booking_exists = db.scalar(
-                select(TrainingBooking.booking_id).where(
-                    TrainingBooking.trainer_id == trainer_id,
-                    TrainingBooking.member_id == member.member_id,
-                    TrainingBooking.booking_date == work_date,
-                    TrainingBooking.start_time == start_time,
-                )
+    # 5. Seed Mã giảm giá (Discounts)
+    discount_specs = [
+        ("WELCOME20", "Giảm 20% cho hội viên đăng ký mới", "PERCENT", Decimal("20.00"), Decimal("400000.00"), Decimal("500000.00"), today + timedelta(days=90), 100),
+        ("SUMMER100K", "Giảm trực tiếp 100.000đ cho mọi gói tập", "FIXED", Decimal("100000.00"), Decimal("499000.00"), None, today + timedelta(days=60), 50),
+        ("DUCKYVIP", "Giảm 15% gói VIP 6-12 tháng", "PERCENT", Decimal("15.00"), Decimal("2000000.00"), Decimal("800000.00"), today + timedelta(days=120), 30),
+        ("EXPIRED10", "Voucher hết hạn dùng để test validate", "PERCENT", Decimal("10.00"), Decimal("0.00"), None, today - timedelta(days=5), 10),
+    ]
+    for code, desc, dtype, dval, min_ord, max_disc, exp_date, limit in discount_specs:
+        disc = db.query(Discount).filter(Discount.code == code).first()
+        if not disc:
+            disc = Discount(
+                code=code,
+                description=desc,
+                discount_type=dtype,
+                discount_value=dval,
+                min_order_amount=min_ord,
+                max_discount_amount=max_disc,
+                start_date=today - timedelta(days=30),
+                expiry_date=exp_date,
+                usage_limit=limit,
+                used_count=2 if code == "WELCOME20" else 0,
+                is_active=exp_date >= today,
             )
-            if booking_exists is None:
-                db.add(
-                    TrainingBooking(
-                        member_id=member.member_id,
-                        trainer_id=trainer_id,
-                        schedule_id=schedule.schedule_id,
-                        booking_date=work_date,
-                        start_time=start_time,
-                        end_time=time(start_time.hour + 1, 0),
-                        status=BookingStatus.CONFIRMED,
+            db.add(disc)
+    db.commit()
+
+    # 6. Seed 20 Hội viên
+    member_names = [
+        "Nguyễn Văn Hoàng",
+        "Trần Thị Minh Thư",
+        "Lê Hoàng Nam",
+        "Phạm Quỳnh Anh",
+        "Vũ Minh Tuấn",
+        "Đặng Thu Trang",
+        "Bùi Đức Duy",
+        "Đỗ Ngọc Ánh",
+        "Hoàng Gia Bảo",
+        "Ngô Phương Linh",
+        "Dương Thanh Tùng",
+        "Lý Khánh Huyền",
+        "Trương Quốc Khánh",
+        "Phan Bảo Ngọc",
+        "Võ Nhật Minh",
+        "Đinh Thảo Nguyên",
+        "Hồ Anh Dũng",
+        "Mai Thanh Hà",
+        "Lương Tuấn Kiệt",
+        "Chu Diệu Linh",
+    ]
+
+    for idx, full_name in enumerate(member_names, start=1):
+        try:
+            uname = "hoivien" if idx == 1 else f"member{idx:02d}"
+            email = "member@duckygym.vn" if idx == 1 else f"member{idx:02d}@duckygym.vn"
+            phone = f"09010000{idx:02d}"
+            gender = Gender.MALE if idx % 2 == 1 else Gender.FEMALE
+
+            u = _upsert_user(
+                db,
+                username=uname,
+                email=email,
+                phone=phone,
+                full_name=full_name,
+                password_hash=member_pw,
+                role=UserRole.MEMBER,
+            )
+
+            m = (
+                db.query(Member)
+                .filter(
+                    or_(
+                        Member.user_id == u.user_id,
+                        Member.phone == u.phone,
+                        Member.email == u.email,
                     )
                 )
-                inserted["training_bookings"] += 1
-
-    for index in range(1, len(MEMBER_NAMES) + 1):
-        member = members_by_email[f"member{index:02d}@duckygym.local"]
-        trainer = TRAINERS[(index - 1) % len(TRAINERS)]
-        trainer_id = users_by_name[trainer[0]].user_id
-        assignment_exists = db.scalar(
-            select(TrainerMember.id).where(
-                TrainerMember.trainer_id == trainer_id,
-                TrainerMember.member_id == member.member_id,
+                .first()
             )
-        )
-        if assignment_exists is None:
-            db.add(
-                TrainerMember(
-                    trainer_id=trainer_id,
-                    member_id=member.member_id,
-                    assigned_by=receptionist_id,
-                    start_date=today,
-                    status=AssignmentStatus.ACTIVE,
+            if not m:
+                join_offset = (idx * 7) % 120
+                m = Member(
+                    user_id=u.user_id,
+                    full_name=full_name,
+                    gender=gender,
+                    date_of_birth=date(1995 + (idx % 10), (idx % 12) + 1, (idx % 25) + 1),
+                    phone=u.phone,
+                    email=u.email,
+                    address=f"Số {idx * 12} Nguyễn Trãi, Hà Đông, Hà Nội",
+                    join_date=today - timedelta(days=join_offset),
+                    status=MemberStatus.ACTIVE,
                 )
-            )
-            inserted["trainer_members"] += 1
+                db.add(m)
+                db.commit()
+                db.refresh(m)
 
-    db.flush()
-    for index in range(1, 13):
-        member = members_by_email[f"member{index:02d}@duckygym.local"]
-        subscription = subscriptions_by_member[member.member_id]
-        if subscription.status != SubscriptionStatus.ACTIVE:
-            continue
-        check_in = datetime.combine(today, time(6 + index % 10, 0))
-        attendance_exists = db.scalar(
-            select(AttendanceRecord.attendance_id).where(
-                AttendanceRecord.member_id == member.member_id,
-                AttendanceRecord.subscription_id == subscription.subscription_id,
-                AttendanceRecord.checked_in_by == receptionist_id,
-            )
-        )
-        if attendance_exists is None:
-            db.add(
-                AttendanceRecord(
-                    member_id=member.member_id,
-                    subscription_id=subscription.subscription_id,
-                    checked_in_by=receptionist_id,
-                    check_in=check_in,
-                    check_out=check_in + timedelta(minutes=60),
-                    status=AttendanceStatus.CHECKED_OUT,
+            card = db.query(MemberCard).filter(MemberCard.user_id == u.user_id).first()
+            if not card:
+                c_code = f"DG-{u.user_id:06d}" if idx <= 5 else generate_card_code(u.user_id, deterministic_for_seed=True)
+                if db.query(MemberCard).filter(MemberCard.card_code == c_code).first():
+                    c_code = generate_card_code(u.user_id, deterministic_for_seed=False)
+                height = Decimal("172.0") if gender == Gender.MALE else Decimal("160.0")
+                weight = Decimal(str(65 + (idx % 12))) if gender == Gender.MALE else Decimal(str(50 + (idx % 8)))
+                bmi = round(weight / ((height / Decimal("100")) ** 2), 1)
+                card = MemberCard(
+                    user_id=u.user_id,
+                    member_id=m.member_id,
+                    card_code=c_code,
+                    qr_base64=generate_qr_base64(c_code),
+                    height_cm=height,
+                    weight_kg=weight,
+                    bmi=bmi,
+                    target_weight_kg=weight - Decimal("2.0"),
+                    weekly_workouts=4,
+                    emergency_contact=f"Người thân ({u.phone[:-2]}99)",
+                    streak_days=5 if idx == 1 else (idx % 12),
+                    total_checkins=32 if idx == 1 else (idx * 3),
                 )
-            )
-            inserted["attendance_records"] += 1
+                db.add(card)
+                db.commit()
+                db.refresh(card)
 
-    feedback_samples = (
-        ("Dich vu rat tot", FeedbackType.RATING, 5),
-        ("Phong tap sach se", FeedbackType.RATING, 4),
-        ("Nhan vien than thien", FeedbackType.RATING, 5),
-        ("Can them lop yoga", FeedbackType.COMPLAINT, None),
-        ("Thiet bi hien dai", FeedbackType.RATING, 5),
-        ("Lich PT linh hoat", FeedbackType.RATING, 4),
-        ("Can bo sung khan", FeedbackType.COMPLAINT, None),
-        ("Trai nghiem tot", FeedbackType.RATING, 5),
-    )
-    for index, (title, feedback_type, rating) in enumerate(feedback_samples, start=1):
-        member = members_by_email[f"member{index:02d}@duckygym.local"]
-        feedback_exists = db.scalar(
-            select(Feedback.feedback_id).where(
-                Feedback.member_id == member.member_id,
-                Feedback.title == title,
-            )
-        )
-        if feedback_exists is None:
-            db.add(
-                Feedback(
-                    member_id=member.member_id,
-                    handled_by=receptionist_id,
-                    type=feedback_type,
-                    rating=rating,
-                    title=title,
-                    content=f"Phan hoi mau cua hoi vien {member.full_name}.",
-                    status=FeedbackStatus.RESOLVED,
-                    response="Cam on ban da gui phan hoi.",
-                    responded_at=datetime.combine(today, time(9, 0)),
+            existing_sub = db.query(Subscription).filter(Subscription.member_id == m.member_id).first()
+            if not existing_sub and plans:
+                chosen_plan = plans[(idx - 1) % len(plans)]
+                if idx in (4, 9, 15):
+                    start_dt = today - timedelta(days=chosen_plan.duration_days - 2)
+                    end_dt = today + timedelta(days=2)
+                    sub_status = SubscriptionStatus.ACTIVE
+                elif idx in (18, 20):
+                    start_dt = today - timedelta(days=chosen_plan.duration_days + 10)
+                    end_dt = today - timedelta(days=10)
+                    sub_status = SubscriptionStatus.EXPIRED
+                else:
+                    start_dt = today - timedelta(days=(idx * 3) % 25)
+                    end_dt = start_dt + timedelta(days=chosen_plan.duration_days)
+                    sub_status = SubscriptionStatus.ACTIVE
+
+                sub_type = SubscriptionType.RENEW if idx % 3 == 0 else SubscriptionType.NEW
+                sub = Subscription(
+                    member_id=m.member_id,
+                    plan_id=chosen_plan.plan_id,
+                    subscription_type=sub_type,
+                    start_date=start_dt,
+                    end_date=end_dt,
+                    status=sub_status,
                 )
-            )
-            inserted["feedbacks"] += 1
+                db.add(sub)
+                db.flush()
 
-    notification_users = (
-        ("admin", "Thong bao he thong", NotificationType.SYSTEM),
-        ("le_tan", "Quy trinh tiep don", NotificationType.SYSTEM),
-        ("pt_tuan_anh", "Lich huan luyen", NotificationType.TRAINING_SCHEDULE),
-        ("pt_mai_linh", "Lich huan luyen", NotificationType.TRAINING_SCHEDULE),
-        ("pt_quoc_bao", "Lich huan luyen", NotificationType.TRAINING_SCHEDULE),
-    )
-    for username, title, notification_type in notification_users:
-        user = users_by_name[username]
-        notification_exists = db.scalar(
-            select(Notification.notification_id).where(
-                Notification.user_id == user.user_id,
-                Notification.title == title,
-            )
-        )
-        if notification_exists is None:
-            db.add(
-                Notification(
-                    user_id=user.user_id,
-                    title=title,
-                    content="Day la thong bao du lieu mau.",
-                    type=notification_type,
-                    is_read=False,
+                inv = Invoice(
+                    member_id=m.member_id,
+                    subscription_id=sub.subscription_id,
+                    created_by=staff_user.user_id,
+                    total_amount=chosen_plan.price,
+                    discount_amount=Decimal("0.00"),
+                    final_amount=chosen_plan.price,
+                    status=InvoiceStatus.PAID,
                 )
-            )
-            inserted["notifications"] += 1
+                inv_dt = datetime.now() - timedelta(days=(idx * 8) % 95)
+                inv.created_at = inv_dt
+                inv.updated_at = inv_dt
+                db.add(inv)
+                db.flush()
 
-    audit_targets = (
-        ("membership_plans", plans_by_name[PLANS[0]["plan_name"]].plan_id),
-        ("members", members_by_email["member01@duckygym.local"].member_id),
-        (
-            "subscriptions",
-            subscriptions_by_member[
-                members_by_email["member01@duckygym.local"].member_id
-            ].subscription_id,
-        ),
-        (
-            "invoices",
-            invoices_by_member[
-                members_by_email["member01@duckygym.local"].member_id
-            ].invoice_id,
-        ),
-        ("equipment", db.scalar(select(Equipment.equipment_id).order_by(Equipment.equipment_id))),
-    )
-    for entity_name, entity_id in audit_targets:
-        log_exists = db.scalar(
-            select(AuditLog.log_id).where(
-                AuditLog.user_id == users_by_name["admin"].user_id,
-                AuditLog.action == "CREATE",
-                AuditLog.entity_name == entity_name,
-                AuditLog.entity_id == entity_id,
-            )
-        )
-        if log_exists is None:
-            db.add(
-                AuditLog(
-                    user_id=users_by_name["admin"].user_id,
-                    action="CREATE",
-                    entity_name=entity_name,
-                    entity_id=entity_id,
-                    new_value="Sample seed data",
+                pay = Payment(
+                    invoice_id=inv.invoice_id,
+                    received_by=staff_user.user_id,
+                    amount=chosen_plan.price,
+                    payment_method=PaymentMethod.BANK_TRANSFER if idx % 2 == 0 else PaymentMethod.CASH,
+                    payment_date=inv_dt,
+                    status=PaymentStatus.SUCCESS,
+                    transaction_code=f"TXN-DG-{inv.invoice_id:06d}-{idx}",
                 )
-            )
-            inserted["audit_logs"] += 1
+                db.add(pay)
 
-    db.commit()
-    return inserted
+                if idx <= 6 and sub_status == SubscriptionStatus.ACTIVE:
+                    for d_back in range(4, -1, -1):
+                        ci_time = datetime.now() - timedelta(days=d_back, hours=2)
+                        co_time = None if (idx in (1, 2) and d_back == 0) else (ci_time + timedelta(minutes=75))
+                        att = AttendanceRecord(
+                            member_id=m.member_id,
+                            subscription_id=sub.subscription_id,
+                            checked_in_by=staff_user.user_id,
+                            check_in=ci_time,
+                            check_out=co_time,
+                            status=AttendanceStatus.CHECKED_IN if co_time is None else AttendanceStatus.CHECKED_OUT,
+                        )
+                        db.add(att)
 
+                if idx == 1:
+                    for w_idx, w_val in enumerate([68.5, 67.8, 67.1, 66.5, 66.0]):
+                        rec_date = today - timedelta(days=(4 - w_idx) * 7)
+                        h_cm = Decimal("172.0")
+                        w_kg = Decimal(str(w_val))
+                        bmi_val = round(w_kg / ((h_cm / Decimal("100")) ** 2), 1)
+                        bm = BodyMetric(
+                            user_id=u.user_id,
+                            recorded_date=rec_date,
+                            height_cm=h_cm,
+                            weight_kg=w_kg,
+                            bmi=bmi_val,
+                            body_fat_pct=Decimal(str(18.5 - w_idx * 0.4)),
+                            muscle_mass_kg=Decimal(str(31.0 + w_idx * 0.3)),
+                            waist_cm=Decimal(str(79.0 - w_idx * 0.5)),
+                            notes=f"Đo InBody tuần {w_idx + 1}",
+                        )
+                        db.add(bm)
 
-def seed(database_url: URL | str | None = None) -> dict[str, int]:
-    seed_engine = create_engine(
-        database_url or settings.DATABASE_URL,
-        pool_pre_ping=True,
-        pool_recycle=3600,
-    )
+                db.commit()
+        except Exception:
+            db.rollback()
+
+    # 7. Seed Lịch làm việc PT & Booking mẫu
     try:
-        create_tables(seed_engine)
-        with Session(seed_engine) as db:
-            return seed_data(db)
-    finally:
-        seed_engine.dispose()
+        monday = today - timedelta(days=today.weekday())
+        first_member = db.query(Member).order_by(Member.member_id.asc()).first()
+        for pt in pt_users:
+            for day_offset in range(0, 7):
+                w_date = monday + timedelta(days=day_offset)
+                for hour in (7, 9, 14, 16, 18):
+                    st_time = time(hour, 0)
+                    en_time = time(hour + 1, 0)
+                    sched = (
+                        db.query(TrainerSchedule)
+                        .filter(
+                            TrainerSchedule.trainer_id == pt.user_id,
+                            TrainerSchedule.work_date == w_date,
+                            TrainerSchedule.start_time == st_time,
+                        )
+                        .first()
+                    )
+                    if not sched:
+                        sched = TrainerSchedule(
+                            trainer_id=pt.user_id,
+                            work_date=w_date,
+                            start_time=st_time,
+                            end_time=en_time,
+                            status=ScheduleStatus.ACTIVE,
+                        )
+                        db.add(sched)
+                        db.flush()
+
+                        if (
+                            first_member
+                            and pt.user_id == pt_users[0].user_id
+                            and day_offset in (1, 3)
+                            and hour == 18
+                        ):
+                            bk = TrainingBooking(
+                                member_id=first_member.member_id,
+                                trainer_id=pt.user_id,
+                                schedule_id=sched.schedule_id,
+                                booking_date=w_date,
+                                start_time=st_time,
+                                end_time=en_time,
+                                status=BookingStatus.CONFIRMED if day_offset == 1 else BookingStatus.PENDING,
+                            )
+                            db.add(bk)
+        db.commit()
+    except Exception:
+        db.rollback()
+
+    # 8. Seed Lớp tập nhóm (Group Classes)
+    try:
+        if db.query(GroupClass).count() == 0 and len(pt_users) >= 3:
+            first_member = db.query(Member).order_by(Member.member_id.asc()).first()
+            class_specs = [
+                ("Hatha Yoga Phục Hồi & Thở", "YOGA", pt_users[1].user_id, "Studio A · Tầng 2", today + timedelta(days=1), time(7, 0), time(8, 0), 15, "Lớp Yoga cân bằng tâm trí, kéo giãn cột sống và cải thiện độ dẻo dai."),
+                ("Zumba Latin Đốt Mỡ Sôi Động", "ZUMBA", pt_users[1].user_id, "Studio B · Tầng 1", today + timedelta(days=1), time(18, 0), time(19, 0), 20, "Đốt 600 kcal mỗi giờ trên nền nhạc Latin tràn đầy năng lượng."),
+                ("HIIT Full Body Burn", "HIIT", pt_users[2].user_id, "Khu Functional", today + timedelta(days=2), time(17, 30), time(18, 30), 12, "Tập luyện cường độ cao ngắt quãng giúp tăng sức bền và giảm mỡ tối đa."),
+                ("Boxing & Footwork Cơ Bản", "BOXING", pt_users[2].user_id, "Khu Boxing Ring", today + timedelta(days=3), time(19, 0), time(20, 0), 10, "Kỹ thuật đấm, di chuyển và phản xạ thực chiến cùng HLV Quốc Bảo."),
+            ]
+            for cname, ccat, tid, room, sdate, st, et, cap, cdesc in class_specs:
+                gc = GroupClass(
+                    class_name=cname,
+                    category=ccat,
+                    trainer_id=tid,
+                    room=room,
+                    schedule_date=sdate,
+                    start_time=st,
+                    end_time=et,
+                    max_capacity=cap,
+                    status="ACTIVE",
+                    description=cdesc,
+                )
+                db.add(gc)
+                db.flush()
+                if first_member and first_member.user_id:
+                    enr = GroupClassEnrollment(
+                        class_id=gc.class_id,
+                        user_id=first_member.user_id,
+                        status="REGISTERED",
+                    )
+                    db.add(enr)
+            db.commit()
+    except Exception:
+        db.rollback()
+
+    return {
+        "plans": db.query(MembershipPlan).count(),
+        "members": db.query(Member).count(),
+        "equipment": db.query(Equipment).count(),
+        "trainers": db.query(User).filter(User.role == UserRole.TRAINER).count(),
+        "discounts": db.query(Discount).count(),
+        "group_classes": db.query(GroupClass).count(),
+    }
 
 
 if __name__ == "__main__":
-    database_url = make_url(settings.DATABASE_URL)
-    if database_url.drivername.startswith("mysql"):
-        password = getpass(
-            "MySQL password (press Enter to use DATABASE_URL): "
-        )
-        if password:
-            database_url = database_url.set(password=password)
-    counts = seed(database_url)
-    print("Seed completed:", ", ".join(f"{key}={value}" for key, value in counts.items()))
+    session = SessionLocal()
+    try:
+        counts = seed_all(session)
+        print("MySQL: connected | Seed dữ liệu mẫu thành công:", counts)
+    finally:
+        session.close()

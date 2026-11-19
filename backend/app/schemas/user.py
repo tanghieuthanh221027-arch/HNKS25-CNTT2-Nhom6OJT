@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Annotated, Optional , Any
+from typing import Annotated, Any, Optional
 
 from pydantic import (
     BaseModel,
@@ -26,7 +26,7 @@ EMPLOYMENT_FIELDS = ("position", "hire_date", "salary")
 TRAINER_FIELDS = ("specialization", "experience_years", "bio")
 
 
-def _check_role_fields(role: UserRole, values: dict[str , Any]) -> None:
+def _check_role_fields(role: UserRole, values: dict[str, Any]) -> None:
     if role == UserRole.MEMBER:
         for field in EMPLOYMENT_FIELDS:
             if values.get(field) is not None:
@@ -72,7 +72,9 @@ class UserRegister(BaseModel):
     phone: PhoneStr
     gender: Gender
     date_of_birth: date
-    address: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)]
+    address: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)
+    ]
 
     @field_validator("password")
     @classmethod
@@ -85,7 +87,11 @@ class UserRegister(BaseModel):
         today = date.today()
         if value >= today:
             raise ValueError("Ngày sinh phải nhỏ hơn ngày hiện tại")
-        age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
+        age = (
+            today.year
+            - value.year
+            - ((today.month, today.day) < (value.month, value.day))
+        )
         if age < 12 or age > 100:
             raise ValueError("Tuổi hội viên phải từ 12 đến 100")
         return value
@@ -102,12 +108,16 @@ class UserUpdateSelf(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[PhoneStr] = None
     bio: Optional[str] = None
-
-    @model_validator(mode="after")
-    def require_any_field(self) -> "UserUpdateSelf":
-        if not self.model_dump(exclude_unset=True):
-            raise ValueError("Cần cung cấp ít nhất một trường để cập nhật")
-        return self
+    gender: Optional[Gender] = None
+    date_of_birth: Optional[date] = None
+    address: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    height_cm: Optional[Decimal] = Field(default=None, gt=0, le=300)
+    weight_kg: Optional[Decimal] = Field(default=None, gt=0, le=500)
+    target_weight_kg: Optional[Decimal] = Field(default=None, gt=0, le=500)
+    weekly_workouts: Optional[int] = Field(default=None, ge=1, le=14)
+    current_password: Optional[str] = None
+    new_password: Optional[str] = None
 
 
 class UserUpdate(BaseModel):
@@ -165,6 +175,30 @@ class PasswordReset(BaseModel):
         return validate_password_strength(value)
 
 
+class BodyMetricCreate(BaseModel):
+    recorded_date: Optional[date] = None
+    height_cm: Decimal = Field(gt=0, le=300)
+    weight_kg: Decimal = Field(gt=0, le=500)
+    body_fat_pct: Optional[Decimal] = Field(default=None, ge=1, le=75)
+    muscle_mass_kg: Optional[Decimal] = Field(default=None, gt=0, le=200)
+    waist_cm: Optional[Decimal] = Field(default=None, gt=0, le=250)
+    notes: Optional[str] = Field(default=None, max_length=255)
+
+
+class BodyMetricResponse(ORMModel):
+    metric_id: int
+    user_id: int
+    recorded_date: date
+    height_cm: Decimal
+    weight_kg: Decimal
+    bmi: Decimal
+    body_fat_pct: Optional[Decimal] = None
+    muscle_mass_kg: Optional[Decimal] = None
+    waist_cm: Optional[Decimal] = None
+    notes: Optional[str] = None
+    created_at: datetime
+
+
 class UserResponse(ORMModel):
     user_id: int
     username: str
@@ -181,6 +215,22 @@ class UserResponse(ORMModel):
     status: UserStatus
     created_at: datetime
     updated_at: datetime
+    # Extended profile fields (Task T067D56 & T3CD518)
+    member_id: Optional[int] = None
+    member_code: Optional[str] = None
+    qr_base64: Optional[str] = None
+    gender: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    address: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    height_cm: Optional[Decimal] = None
+    weight_kg: Optional[Decimal] = None
+    bmi: Optional[Decimal] = None
+    target_weight_kg: Optional[Decimal] = None
+    weekly_workouts: Optional[int] = None
+    streak_days: int = 0
+    total_checkins: int = 0
+    badges: list[dict[str, Any]] = []
 
 
 class UserPublicResponse(ORMModel):
@@ -198,6 +248,8 @@ class UserPublicResponse(ORMModel):
 class TrainerResponse(ORMModel):
     user_id: int
     full_name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
     specialization: Optional[str] = None
     experience_years: Optional[int] = None
     bio: Optional[str] = None
