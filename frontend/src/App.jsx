@@ -9,7 +9,9 @@ import MemberProfilePage from "./pages/MemberProfilePage";
 import PTPage from "./pages/PTPage";
 import Unauthorized from "./pages/Unauthorized";
 import HomePage from "./pages/HomePage";
-import MembershipPage from "./pages/MembershipPage";
+
+import MembershipPage from "./pages/MembershipPage"; import PosPage from "./pages/pos/PosPage";
+
 import CheckInPage from "./pages/CheckInPage";
 import PTBookingPage from "./pages/PTBookingPage";
 
@@ -22,7 +24,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<RegisterMember />} />
       <Route path="/membership" element={<MembershipPage />} />
-      <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="/unauthorized" element={<Unauthorized />} /> <Route path="/pos" element={<PosPage />} />
 
       {/* Trang Quản trị ADMIN & Màn POS Lễ tân (STAFF / CASHIER) - Độc quyền sử dụng Kiosk Quét QR */}
       <Route
