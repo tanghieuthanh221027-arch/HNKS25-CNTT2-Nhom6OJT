@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 import "./MemberProfilePage.css";
 
@@ -19,7 +20,11 @@ const MemberProfilePage = () => {
     targetWeight: "",
     weeklyWorkouts: "",
   });
-  const memberCode = user?.user_id ? `DG-${String(user.user_id).padStart(6, "0")}` : "Chưa cấp mã";
+
+  // Đồng bộ định dạng mã hội viên với trang MemberPage để quét QR nhất quán
+  const memberCode =
+    user?.member_code ||
+    (user?.user_id ? `DG-${String(user.user_id).padStart(6, "0")}` : "DG-000001");
 
   const updateField = (event) => {
     const { name, value } = event.target;
@@ -65,7 +70,44 @@ const MemberProfilePage = () => {
 
             <section className="profile-qr-card">
               <div className="profile-card-heading"><span className="material-symbols-outlined">qr_code_2</span><h2>Mã hội viên</h2></div>
-              <div className="profile-qr" aria-label="Mã QR minh họa"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M5 5h28v28H5zm6 6v16h16V11zm5 5h6v6h-6zM67 5h28v28H67zm6 6v16h16V11zm5 5h6v6h-6zM5 67h28v28H5zm6 6v16h16V73zm5 5h6v6h-6zM40 6h8v8h-8zm12 0h8v14h-8zM39 23h17v8H39zm-31 17h11v8H8zm18 0h9v18h-9zm14 2h17v9H40zm22-4h8v17h-8zm13 0h18v8H75zM39 62h10v8H39zm17-4h8v19h-8zm16 5h9v9h-9zm13 11h10v8H85zM39 78h17v8H39zm25 0h8v17h-8zm14 5h17v8H78z"/></svg></div>
+              <div
+                className="profile-qr"
+                aria-label={`Mã QR check-in của ${memberCode}`}
+                style={{
+                  position: "relative",
+                  display: "grid",
+                  placeItems: "center",
+                  background: "#ffffff",
+                  padding: "14px",
+                  borderRadius: "16px",
+                  width: "fit-content",
+                  margin: "0 auto",
+                }}
+              >
+                <QRCodeSVG
+                  value={memberCode}
+                  size={150}
+                  bgColor="#ffffff"
+                  fgColor="#0b1326"
+                  level="H"
+                  includeMargin={false}
+                />
+                <span
+                  className="material-symbols-outlined"
+                  style={{
+                    position: "absolute",
+                    background: "#f97316",
+                    color: "#351400",
+                    padding: "4px",
+                    borderRadius: "8px",
+                    border: "3px solid #ffffff",
+                    fontSize: "18px",
+                    lineHeight: 1,
+                  }}
+                >
+                  fitness_center
+                </span>
+              </div>
               <b>{memberCode}</b><p>Thẻ điện tử hội viên</p>
             </section>
 

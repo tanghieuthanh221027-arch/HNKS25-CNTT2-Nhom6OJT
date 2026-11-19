@@ -1,0 +1,345 @@
+.checkin-page {
+    min-height: 100vh;
+    background: #0b1326;
+    color: #dae2fd;
+    font-family: Inter, Arial, sans-serif
+}
+
+.checkin-page * {
+    box-sizing: border-box
+}
+
+.checkin-page a {
+    color: inherit;
+    text-decoration: none
+}
+
+.checkin-header {
+    height: 76px;
+    padding: 0 clamp(20px, 5vw, 72px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #ffffff12;
+    background: #0b1326eF
+}
+
+.checkin-brand,
+.checkin-user {
+    display: flex;
+    align-items: center;
+    gap: 12px
+}
+
+.checkin-brand>.material-symbols-outlined {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #f97316;
+    color: #351606;
+    font-size: 24px
+}
+
+.checkin-brand span:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 3px
+}
+
+.checkin-brand b {
+    font-size: 14px;
+    letter-spacing: .12em
+}
+
+.checkin-brand small {
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: #ffb690
+}
+
+.checkin-user {
+    color: #bbc6db;
+    font-size: 14px
+}
+
+.checkin-user .material-symbols-outlined {
+    color: #ffb690
+}
+
+.checkin-content {
+    width: min(1120px, calc(100% - 40px));
+    margin: 34px auto 72px
+}
+
+.checkin-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #aab6ce !important;
+    font-size: 14px;
+    margin-bottom: 24px
+}
+
+.checkin-back:hover {
+    color: #ffb690 !important
+}
+
+.checkin-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(260px, .8fr);
+    gap: 24px;
+    align-items: start
+}
+
+.checkin-scanner-card,
+.checkin-help-card {
+    background: #131b2e;
+    border: 1px solid #ffffff12;
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 20px 60px #0003
+}
+
+.checkin-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px
+}
+
+.checkin-title>.material-symbols-outlined {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: #ffb6901a;
+    color: #ffb690;
+    font-size: 26px
+}
+
+.checkin-title h1 {
+    font-size: 24px;
+    margin: 0 0 5px;
+    font-weight: 700
+}
+
+.checkin-title p {
+    color: #9ca8bf;
+    margin: 0;
+    font-size: 14px
+}
+
+.checkin-viewfinder {
+    position: relative;
+    width: min(100%, 430px);
+    aspect-ratio: 1;
+    margin: 0 auto 22px;
+    background: #060e20;
+    border-radius: 14px;
+    overflow: hidden;
+    display: grid;
+    place-items: center
+}
+
+.checkin-viewfinder video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover
+}
+
+.checkin-corners {
+    position: absolute;
+    inset: 22px;
+    border: 3px solid #ff9b62;
+    border-radius: 14px;
+    opacity: .9;
+    pointer-events: none
+}
+
+.checkin-laser {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    height: 2px;
+    top: 15%;
+    background: linear-gradient(90deg, transparent, #ff7b32, transparent);
+    box-shadow: 0 0 16px #ff7b32;
+    animation: checkin-scan 2.5s ease-in-out infinite;
+    pointer-events: none
+}
+
+.checkin-viewfinder.is-success .checkin-laser,
+.checkin-viewfinder.is-error .checkin-laser {
+    display: none
+}
+
+.checkin-result {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #060e20c9;
+    backdrop-filter: blur(4px);
+    font-size: 14px;
+    letter-spacing: .1em
+}
+
+.checkin-result .material-symbols-outlined {
+    font-size: 62px
+}
+
+.checkin-result.is-success {
+    color: #57d69a
+}
+
+.checkin-result.is-error {
+    color: #ff7777
+}
+
+.checkin-result.is-checking {
+    color: #ffb690
+}
+
+.checkin-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 17px;
+    border-radius: 12px;
+    background: #171f33;
+    color: #dae2fd
+}
+
+.checkin-status .material-symbols-outlined {
+    font-size: 23px;
+    color: #ffb690
+}
+
+.checkin-status p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5
+}
+
+.checkin-status.is-success .material-symbols-outlined {
+    color: #57d69a
+}
+
+.checkin-status.is-error .material-symbols-outlined {
+    color: #ff7777
+}
+
+.checkin-camera-error {
+    color: #ffb4ab;
+    background: #93000a33;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5
+}
+
+.checkin-retry {
+    display: block;
+    margin: 16px auto 0;
+    border: 0;
+    border-radius: 10px;
+    padding: 12px 20px;
+    background: #f97316;
+    color: #271309;
+    font-weight: 700;
+    cursor: pointer
+}
+
+.checkin-help-card {
+    padding: 26px
+}
+
+.checkin-help-card>.material-symbols-outlined {
+    font-size: 28px;
+    color: #ffb690
+}
+
+.checkin-help-card h2 {
+    font-size: 19px;
+    margin: 12px 0 20px
+}
+
+.checkin-help-card ol {
+    padding-left: 20px;
+    color: #b6c0d4;
+    font-size: 14px;
+    line-height: 1.75
+}
+
+.checkin-help-card li {
+    padding-left: 5px;
+    margin-bottom: 12px
+}
+
+.checkin-help-note {
+    display: flex;
+    gap: 10px;
+    padding: 14px;
+    background: #222a3d;
+    border-radius: 11px;
+    color: #c1cbe0;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 26px
+}
+
+.checkin-help-note .material-symbols-outlined {
+    color: #7bd0ff
+}
+
+@keyframes checkin-scan {
+
+    0%,
+    100% {
+        top: 15%
+    }
+
+    50% {
+        top: 85%
+    }
+}
+
+@media(max-width:760px) {
+    .checkin-header {
+        height: 68px;
+        padding: 0 18px
+    }
+
+    .checkin-user {
+        font-size: 0
+    }
+
+    .checkin-user .material-symbols-outlined {
+        font-size: 24px
+    }
+
+    .checkin-content {
+        width: calc(100% - 28px);
+        margin-top: 24px
+    }
+
+    .checkin-layout {
+        grid-template-columns: 1fr;
+        gap: 16px
+    }
+
+    .checkin-scanner-card,
+    .checkin-help-card {
+        padding: 20px
+    }
+
+    .checkin-viewfinder {
+        width: min(100%, 360px)
+    }
+}
