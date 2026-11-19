@@ -1,5 +1,6 @@
 from datetime import date
 from typing import TYPE_CHECKING, Optional
+from uuid import uuid4
 
 from sqlalchemy import Date, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -22,6 +23,8 @@ class Member(Base, TimestampMixin):
     __tablename__ = "members"
     __table_args__ = (
         Index("ix_members_full_name", "full_name"),
+        Index("ix_members_phone", "phone"),
+        Index("uq_members_qr_code", "qr_code", unique=True),
         Index("ix_members_status", "status"),
     )
 
@@ -36,6 +39,9 @@ class Member(Base, TimestampMixin):
     gender: Mapped[Gender] = mapped_column(enum_column(Gender, 10), nullable=False)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
     phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+    qr_code: Mapped[str] = mapped_column(
+        String(64), nullable=False, default=lambda: f"QR-{uuid4().hex}"
+    )
     email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     address: Mapped[str] = mapped_column(String(255), nullable=False)
     join_date: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)

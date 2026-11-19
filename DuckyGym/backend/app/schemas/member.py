@@ -86,6 +86,7 @@ class MemberResponse(ORMModel):
     gender: Gender
     date_of_birth: date
     phone: str
+    qr_code: str
     email: str
     address: str
     join_date: date
