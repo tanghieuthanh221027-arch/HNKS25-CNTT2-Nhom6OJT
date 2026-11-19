@@ -1,0 +1,123 @@
+﻿BẢNG KẾ HOẠCH KIỂM THỬ (TEST PLAN) & BỘ TEST CASE 3 LUỒNG CHÍNH — DỰ ÁN DUCKYGYM (NHÓM 6)
+
+HẠNG MỤC TEST PLAN,NỘI DUNG CHI TIẾT
+Tên dự án,DuckyGym — Hệ thống Quản lý Phòng Gym và Hội viên (Nhóm 6 - HN-KS25-CNTT2)
+Mã Task & Vai trò,"T068151 — [TV6 – QA/Doc] Test plan, test case luồng chính và SRS chương 1-2"
+Người lập & Thực hiện,Tăng Hiếu Thành (B25DTCN260) — Vai trò TV6 (QA / Tài liệu)
+Ngày thực hiện,19/11/2026 (Sprint 2)
+Mục tiêu kiểm thử,"Kiểm thử chức năng, phân quyền, ràng buộc dữ liệu và hiệu năng (< 1s) cho 3 luồng nghiệp vụ cốt lõi: (1) Đăng ký / Đăng nhập JWT, (2) Đăng ký & Gia hạn gói tập sinh thẻ QR, (3) Quét mã QR Check-in / Check-out tại quầy POS Lễ tân."
+Phạm vi kiểm thử (In-Scope),"1. Luồng Đăng ký & Đăng nhập (POST /auth/register, POST /auth/login, GET/PUT /users/me, ProtectedRoute).
+2. Luồng Đăng ký gói tập & Thẻ hội viên QR (GET /gym-plans, POST /subscriptions, GET /subscriptions/me).
+3. Luồng Check-in / Check-out bằng mã QR (POST /checkins/qr, GET /checkins/history, Kiosk POS Lễ tân)."
+Ngoài phạm vi (Out-of-Scope),Kiểm thử chịu tải (Load Testing > 10.000 CCU) và cổng thanh toán ngân hàng thực tế.
+Môi trường kiểm thử,"- OS: Windows 11 64-bit
+- Database: MySQL 8.0 (Database: duckygym)
+- Backend: FastAPI + SQLAlchemy 2.0 + PyJWT + bcrypt (http://127.0.0.1:8000)
+- Frontend: React 18 + Vite 6 + React Router v6 (http://localhost:5173)
+- Trình duyệt: Google Chrome / Microsoft Edge (hỗ trợ BarcodeDetector & Webcam)"
+Tiêu chí Bắt đầu / Kết thúc,"- Entry Criteria: Backend kết nối thành công MySQL (MySQL: connected), đã chạy seed.py (5 gói tập, 20 hội viên, 10 thiết bị, 3 PT, 2 tài khoản admin/lễ tân).
+- Exit Criteria: 100% Test Case thuộc 3 luồng chính được thực thi, ghi nhận đầy đủ Actual Result & Pass/Fail, các lỗi Critical/High được báo cáo và khắc phục."
+Tổng hợp kết quả chạy thử,"Tổng số Test Case: 26 TC | PASS: 26 TC (100% sau khi fix 3 lỗi phát hiện trong vòng test đầu) | Bug phát hiện & đã báo sửa: 03 Bugs (BUG-01, BUG-02, BUG-03)."
+
+DANH SÁCH CHI TIẾT TEST CASE 3 LUỒNG CHÍNH (CÓ CỘT KẾT QUẢ THỰC TẾ & TRẠNG THÁI)
+Mã TC,Luồng nghiệp vụ,Tên Test Case / Kịch bản kiểm thử,Điều kiện tiên quyết (Pre-condition),Các bước thực hiện (Test Steps),Dữ liệu đầu vào (Test Data),Kết quả mong đợi (Expected Result),Kết quả thực tế (Actual Result),Trạng thái (Pass/Fail),Người phụ trách / Ghi chú Bug
+TC-AUTH-01,1. Đăng ký / Đăng nhập,Đăng ký tài khoản hội viên mới hợp lệ,Người dùng chưa có tài khoản; mở trang /register hoặc gọi POST /auth/register,"1. Nhập Họ tên, SĐT, Email chưa tồn tại, Mật khẩu >= 8 ký tự.
+2. Tích chọn đồng ý điều khoản.
+3. Bấm 'Tạo tài khoản hội viên'.","name: 'Nguyễn Minh Quân'
+email: 'minhquan.test@duckygym.vn'
+phone: '0988112233'
+password: 'Password123'","HTTP 201 Created. Tạo bản ghi trong bảng users (role=MEMBER), bảng members và member_cards (sinh sẵn mã thẻ DG-XXXXXX). Tự động đăng nhập hoặc chuyển hướng.","HTTP 201 Created. Trả về {'message': 'Đăng ký thành công', 'user_id': 26}, tự động tạo hồ sơ Member và thẻ QR.",PASS,TV2 (BE Lead) & TV4 (FE Lead)
+TC-AUTH-02,1. Đăng ký / Đăng nhập,Đăng ký trùng địa chỉ Email đã tồn tại (BR03),Tài khoản member@duckygym.vn đã tồn tại trong CSDL,"1. Mở trang /register.
+2. Nhập email đã tồn tại trong hệ thống.
+3. Bấm 'Tạo tài khoản hội viên'.","name: 'Test Trùng Email'
+email: 'member@duckygym.vn'
+phone: '0977889900'
+password: 'Password123'",HTTP 409 Conflict. Hiển thị thông báo lỗi: 'Email đã tồn tại trong hệ thống.' Không tạo bản ghi trùng.,HTTP 409 Conflict. Giao diện hiển thị rõ thông báo đỏ: 'Email đã tồn tại trong hệ thống.',PASS,TV2 (BE Lead)
+TC-AUTH-03,1. Đăng ký / Đăng nhập,Đăng ký trùng Số điện thoại đã tồn tại (BR03),Số điện thoại 0901000001 đã tồn tại trong CSDL,"1. Mở trang /register.
+2. Nhập SĐT 0901000001 và email mới.
+3. Bấm 'Tạo tài khoản hội viên'.","name: 'Test Trùng SĐT'
+email: 'newmail99@duckygym.vn'
+phone: '0901000001'
+password: 'Password123'",HTTP 409 Conflict. Hiển thị thông báo lỗi: 'Số điện thoại đã tồn tại trong hệ thống.',"HTTP 409 Conflict. Trả về error_code='CONFLICT', message='Số điện thoại đã tồn tại trong hệ thống.'",PASS,TV2 (BE Lead)
+TC-AUTH-04,1. Đăng ký / Đăng nhập,Đăng ký với mật khẩu ngắn hơn 8 ký tự hoặc mật khẩu xác nhận không khớp,Mở trang /register,"1. Nhập mật khẩu '12345' (< 8 ký tự) hoặc nhập Confirm Password khác Password.
+2. Bấm Submit.","password: '12345'
+confirmPassword: '123456'",Chặn gửi form tại FE ('Mật khẩu xác nhận không khớp' / minLength=8) và BE trả HTTP 422 VALIDATION_ERROR nếu gọi trực tiếp API.,FE chặn ngay với thông báo 'Mật khẩu xác nhận không khớp.'; gọi API với password < 8 ký tự trả HTTP 422.,PASS,TV4 (FE Lead)
+TC-AUTH-05,1. Đăng ký / Đăng nhập,Đăng nhập thành công với vai trò Hội viên (MEMBER),Tài khoản member@duckygym.vn / Member123 đang ACTIVE,"1. Mở trang /login.
+2. Nhập tài khoản và mật khẩu hội viên.
+3. Bấm 'Đăng nhập'.","username: 'member@duckygym.vn'
+password: 'Member123'",HTTP 200 OK. Trả về JWT access_token và object user. Lưu token vào localStorage và chuyển hướng tới /member.,"HTTP 200 OK. Lưu token thành công, chuyển hướng sang /member hiển thị đầy đủ thẻ QR hội viên (Đã fix BUG-01 & BUG-02).",PASS,Đã báo & fix BUG-01 (dư chữ D ở MemberPage.jsx) & BUG-02 (xung đột React 19/18)
+TC-AUTH-06,1. Đăng ký / Đăng nhập,"Đăng nhập thành công với vai trò ADMIN, STAFF (Lễ tân) và PT","Các tài khoản admin, letan, pt_tuananh đã được seed","1. Đăng nhập lần lượt bằng tài khoản Admin, Lễ tân và PT.
+2. Kiểm tra điều hướng theo vai trò.","- Admin: admin@duckygym.vn / Admin123
+- Lễ tân: staff@duckygym.vn / Staff123
+- PT: pt@duckygym.vn / Trainer123",HTTP 200 OK. Admin chuyển tới /admin; Lễ tân chuyển tới /staff (Màn POS); PT chuyển tới /pt.,"HTTP 200 OK. Cả 3 vai trò điều hướng chính xác tới /admin, /staff và /pt.",PASS,TV2 & TV4
+TC-AUTH-07,1. Đăng ký / Đăng nhập,Đăng nhập thất bại khi nhập sai mật khẩu hoặc tài khoản không tồn tại,Mở trang /login,"1. Nhập email đúng nhưng mật khẩu sai.
+2. Bấm 'Đăng nhập'.","username: 'member@duckygym.vn'
+password: 'SaiMatKhau999'",HTTP 401 Unauthorized. Hiển thị thông báo: 'Email/Tên đăng nhập hoặc mật khẩu không chính xác.',HTTP 401 Unauthorized. Hiển thị rõ thông báo lỗi màu đỏ trên form đăng nhập.,PASS,TV2 (BE Lead)
+TC-AUTH-08,1. Đăng ký / Đăng nhập,Kiểm tra chặn truy cập khi chưa đăng nhập (Thiếu JWT Token -> 401),Chưa đăng nhập (localStorage không có token),"1. Truy cập trực tiếp URL /member hoặc /admin trên trình duyệt.
+2. Gọi API GET /users/me không truyền header Authorization.",Header Authorization: (Trống),"- Trên FE: ProtectedRoute tự động chuyển hướng về /login.
+- Trên API: Trả về HTTP 401 Unauthorized.",FE chuyển hướng ngay về /login; API GET /users/me trả về HTTP 401 {'error_code': 'UNAUTHORIZED'}.,PASS,TV2 & TV4
+TC-AUTH-09,1. Đăng ký / Đăng nhập,Kiểm tra phân quyền khi truy cập sai vai trò (403 Forbidden),Đang đăng nhập bằng tài khoản Hội viên (MEMBER),"1. Dùng token của MEMBER gọi POST /gym-plans hoặc GET /dashboard/export-csv.
+2. Trên trình duyệt, truy cập đường dẫn /staff/check-in.","Role hiện tại: MEMBER
+Endpoint yêu cầu: ADMIN hoặc STAFF","- API trả về HTTP 403 Forbidden ('Bạn không có quyền truy cập chức năng này').
+- FE chuyển hướng sang trang /unauthorized (403).",API trả về đúng HTTP 403 Forbidden; FE chặn và hiển thị trang 403 - Không có quyền truy cập.,PASS,TV2 (Task T067D56)
+TC-AUTH-10,1. Đăng ký / Đăng nhập,"Cập nhật hồ sơ cá nhân, chiều cao, cân nặng và tự động tính chỉ số BMI",Đã đăng nhập tài khoản MEMBER; mở trang /member/profile,"1. Nhập chiều cao 175 cm, cân nặng 70 kg.
+2. Bấm 'Lưu thông tin' (PUT /users/me).","height_cm: 175
+weight_kg: 70.0
+address: 'Hà Đông, Hà Nội'",HTTP 200 OK. Hệ thống tự động tính BMI = 70 / (1.75 * 1.75) = 22.9 và lưu vào lịch sử chỉ số cơ thể.,"HTTP 200 OK. Trả về bmi = 22.9, hiển thị lên thẻ hồ sơ và biểu đồ theo dõi BMI.",PASS,TV2 (Task T067D56) — Đã fix BUG-03 (thiếu schema PasswordChange)
+TC-SUB-01,2. Đăng ký gói tập,Xem danh sách bảng giá gói tập đang mở trên Trang chủ & Trang đăng ký gói,Đã có 5 gói tập mẫu trong CSDL (GET /gym-plans),"1. Mở trang chủ (/) và trang đăng ký gói (/membership).
+2. Kiểm tra danh sách gói tập hiển thị.",GET /gym-plans?page=1&size=20,"HTTP 200 OK. Hiển thị đầy đủ các gói tập có status='ACTIVE' kèm tên, giá, thời hạn (30, 90, 180, 365 ngày) và quyền lợi.","HTTP 200 OK. Hiển thị đầy đủ 5 gói tập ACTIVE, định dạng giá tiền VNĐ chuẩn xác.",PASS,TV2 & TV4 (Task T067EC8)
+TC-SUB-02,2. Đăng ký gói tập,Hội viên mới đăng ký gói tập lần đầu và sinh mã QR thẻ hội viên điện tử,Đăng nhập bằng tài khoản hội viên chưa có gói tập còn hạn,"1. Vào trang /membership.
+2. Chọn gói 'Starter 1 Tháng' (30 ngày - 499.000đ).
+3. Chọn thanh toán Chuyển khoản/QR và bấm 'Xác nhận đăng ký'.","plan_id: 1 (Starter 1 Tháng)
+payment_method: 'BANK_TRANSFER'","HTTP 201 Created. start_date = hôm nay, end_date = hôm nay + 30 ngày. Sinh mã card_code (DG-XXXXXX-XXXX) và chuỗi ảnh qr_base64.","HTTP 201 Created. Modal xác nhận hiển thị mã thẻ, hạn thẻ 30 ngày, chuyển sang /member hiển thị mã QR sắc nét.",PASS,"TV3 & TV5 (Task T067E0D, T067F69)"
+TC-SUB-03,2. Đăng ký gói tập,Gia hạn gói tập khi thẻ hiện tại vẫn còn hạn (Tự động nối tiếp ngày hết hạn),Hội viên đang có gói ACTIVE hết hạn vào ngày D (D >= hôm nay),"1. Vào trang /membership.
+2. Chọn gói 'Pro Fitness 3 Tháng' (90 ngày).
+3. Bấm 'Xác nhận đăng ký' (POST /subscriptions).","plan_id: 2 (90 ngày)
+Thẻ hiện tại còn hạn đến ngày D","HTTP 201 Created. Gói mới có subscription_type='RENEW', start_date = D + 1 ngày, end_date = start_date + 90 ngày (cộng dồn, không mất ngày cũ).","HTTP 201 Created. Hệ thống tự động nối tiếp start_date sau ngày hết hạn cũ 1 ngày, tổng số ngày còn lại được cộng dồn chính xác.",PASS,TV3 (Task T067E0D)
+TC-SUB-04,2. Đăng ký gói tập,Áp dụng mã giảm giá (Voucher) hợp lệ khi đăng ký gói tập,"Voucher WELCOME20 (giảm 20%, đơn tối thiểu 400.000đ) đang còn hạn và còn lượt","1. Tại trang /membership hoặc Quầy POS, chọn gói 'Starter 1 Tháng' (499.000đ).
+2. Nhập mã 'WELCOME20' và bấm 'Áp dụng'.
+3. Hoàn tất đăng ký.","plan_id: 1 (499.000đ)
+discount_code: 'WELCOME20'","Giảm 20% = 99.800đ, tổng thanh toán còn 399.200đ. Lưu hóa đơn với discount_amount=99800, final_amount=399200 và tăng used_count thêm 1.","HTTP 200/201. Hiển thị thông báo 'Áp dụng mã WELCOME20 thành công! Giảm 99,800 đ', hóa đơn lưu đúng số tiền sau giảm.",PASS,"TV2 & TV3 (Task T067DF1, T067E76)"
+TC-SUB-05,2. Đăng ký gói tập,Áp dụng mã giảm giá đã hết hạn hoặc không tồn tại,Voucher EXPIRED10 đã quá ngày expiry_date,"1. Tại trang /membership hoặc POS, nhập mã 'EXPIRED10'.
+2. Bấm 'Áp dụng' (POST /discounts/validate).","code: 'EXPIRED10'
+order_amount: 499000",HTTP 422 Unprocessable Entity. Báo lỗi rõ ràng: 'Mã voucher EXPIRED10 đã hết hạn từ ngày ...',HTTP 422. Giao diện hiển thị cảnh báo đỏ: 'Mã voucher EXPIRED10 đã hết hạn...',PASS,TV3 (Task T067E76)
+TC-SUB-06,2. Đăng ký gói tập,Hiển thị Thẻ hội viên điện tử QR và tải ảnh QR về máy (.png),Hội viên đã đăng nhập và đang ở trang /member,"1. Kiểm tra thông tin trên khung 'Thẻ hội viên điện tử' (GET /subscriptions/me).
+2. Bấm nút 'Tải ảnh QR về máy'.",GET /subscriptions/me,"Hiển thị đúng Họ tên, Mã thẻ, Tên gói, Ngày hết hạn, Mã QR chuẩn ISO. Khi bấm tải, trình duyệt tải về file DuckyGym_QR_<MãThẻ>.png.","Mã QR hiển thị rõ nét, bấm nút tải xuống ngay lập tức file ảnh PNG sắc nét để lưu vào điện thoại.",PASS,TV5 (Task T067F69)
+TC-SUB-07,2. Đăng ký gói tập,Hiển thị banner cảnh báo khi thẻ hội viên sắp hết hạn (<= 7 ngày),Đăng nhập tài khoản hội viên có hạn thẻ còn 2 ngày (VD: member04@duckygym.vn),"1. Đăng nhập tài khoản member04@duckygym.vn / Member123.
+2. Quan sát đầu trang /member.",user: member04@duckygym.vn (còn 2 ngày hết hạn),GET /subscriptions/me trả về near_expiry_warning=true. Đầu trang /member hiển thị thanh cảnh báo màu vàng nhắc gia hạn kèm nút 'Gia hạn ngay'.,Hiển thị đúng banner cảnh báo màu vàng: 'Thẻ hội viên sắp hết hạn trong 2 ngày... Hãy gia hạn sớm!',PASS,TV5 (Task T067F69)
+TC-SUB-08,2. Đăng ký gói tập,Thanh toán đăng ký/gia hạn gói tập tại Quầy POS Lễ tân & In hóa đơn,Đăng nhập tài khoản Lễ tân (staff@duckygym.vn / Staff123) tại /staff,"1. Nhập SĐT '0901000001' bấm 'Tìm SĐT'.
+2. Chọn gói tập, nhập voucher (nếu có), chọn Tiền mặt.
+3. Bấm 'Xác nhận Thu tiền & Xuất Hóa Đơn POS' rồi bấm 'In Hóa Đơn'.","phone: '0901000001'
+plan_id: 1
+payment_method: 'CASH'","HTTP 201 Created. Lưu Invoice, Payment và cập nhật hạn thẻ Subscription trong 1 DB Transaction. Hiển thị hóa đơn POS và mở hộp thoại window.print().","HTTP 201 Created. Cập nhật hạn thẻ tức thì, hiển thị phiếu hóa đơn INV-XXXXXX và gọi window.print() chuẩn định dạng in.",PASS,"TV2 & TV5 (Task T067DF1, T067FBB)"
+TC-QR-01,3. Check-in QR (POS Lễ tân),Quét mã QR hợp lệ lần 1 tại Màn POS Lễ tân -> Ghi nhận CHECK-IN (< 1 giây),Đăng nhập Lễ tân (staff@duckygym.vn) tại /staff; Hội viên có mã DG-000006 đang còn hạn và chưa check-in,"1. Tại khung 'Kiosk Quét QR & Theo dõi Check-in/Check-out' trên màn POS Lễ tân, quét hoặc nhập mã 'DG-000006'.
+2. Bấm 'Quét Check-in / Out'.","POST /checkins/qr
+{'qr_code': 'DG-000006'}","HTTP 200 OK trong < 1000ms. valid=true, status='VALID_CHECKIN', action='CHECK_IN'. Phát âm báo bíp thành công, banner xanh lá, tăng số người đang tập tại phòng thêm 1.","HTTP 200 OK (response_time_ms: ~12ms). Phát âm báo, hiện banner xanh '✓ CHECK-IN HỢP LỆ', thêm hội viên vào bảng đang tập.",PASS,"TV3 & TV5 (Task T067E27, T067F99)"
+TC-QR-02,3. Check-in QR (POS Lễ tân),Quét lại cùng mã QR hợp lệ lần 2 (hoặc bấm 'Cho Check-out') -> Ghi nhận CHECK-OUT,Hội viên mã DG-000006 đang ở trạng thái CHECKED_IN trong phòng tập,"1. Quét lại mã 'DG-000006' lần 2 tại Kiosk POS (hoặc bấm nút 'Cho Check-out' trên dòng hội viên đó).
+2. Quan sát kết quả.","POST /checkins/qr
+{'qr_code': 'DG-000006'}","HTTP 200 OK. valid=true, status='VALID_CHECKOUT', action='CHECK_OUT'. Ghi nhận giờ check_out, tính thời lượng tập (phút), giảm số người đang tập đi 1.","HTTP 200 OK (~10ms). Hiện banner xanh '✓ CHECK-OUT THÀNH CÔNG', cập nhật giờ ra và thời lượng buổi tập.",PASS,TV3 (Task T067E27)
+TC-QR-03,3. Check-in QR (POS Lễ tân),Quét mã QR của thẻ hội viên đã hết hạn -> Từ chối Check-in,Hội viên #18 (mã thẻ DG-000023) có gói tập đã quá ngày end_date,"1. Tại Kiosk POS Lễ tân, quét hoặc bấm nút test mã 'DG-000023'.
+2. Quan sát thông báo và âm báo.","POST /checkins/qr
+{'qr_code': 'DG-000023'}","HTTP 200 OK. valid=false, status='EXPIRED_CARD', action='REJECTED'. Tự động chuyển gói quá hạn sang EXPIRED, phát âm báo lỗi, hiện banner đỏ báo rõ ngày thẻ đã hết hạn.","HTTP 200 OK (~9ms). Phát âm báo cảnh báo, hiện khung đỏ: 'Thẻ hội viên của Mai Thanh Hà đã hết hạn... Vui lòng gia hạn tại quầy lễ tân!'",PASS,"TV1 & TV3 (Task T067CF6, T067E27)"
+TC-QR-04,3. Check-in QR (POS Lễ tân),Quét mã QR không tồn tại trong hệ thống -> Từ chối Check-in,Đăng nhập Lễ tân tại màn POS (/staff),"1. Quét hoặc nhập mã QR lạ không có trong CSDL: 'DG-999999'.
+2. Bấm 'Quét Check-in / Out'.","POST /checkins/qr
+{'qr_code': 'DG-999999'}","HTTP 200 OK. valid=false, status='INVALID_CODE', action='REJECTED'. Hiện banner đỏ: 'Mã QR DG-999999 không tồn tại trong hệ thống.'","HTTP 200 OK (~4ms). Phát âm báo lỗi, hiện banner đỏ '✕ TỪ CHỐI CHECK-IN: Mã QR DG-999999 không tồn tại trong hệ thống.'",PASS,TV3 (Task T067E27)
+TC-QR-05,3. Check-in QR (POS Lễ tân),Kiểm tra phân quyền: Hội viên hoặc khách chưa đăng nhập không được sử dụng Kiosk Quét QR,Đăng nhập bằng tài khoản Hội viên (MEMBER) hoặc chưa đăng nhập,"1. Truy cập URL /kiosk hoặc /staff/check-in.
+2. Dùng token MEMBER gọi trực tiếp API POST /checkins/qr.","Role: MEMBER
+POST /checkins/qr","- Trên giao diện: ProtectedRoute chặn và chuyển hướng sang /unauthorized (403).
+- Trên API: Trả về HTTP 403 Forbidden (chỉ Lễ tân POS & Admin được quét).",Hội viên không còn nút mở Kiosk quét QR; truy cập URL bị chặn 403; gọi API trả về HTTP 403 Forbidden.,PASS,Theo yêu cầu phân quyền Kiosk độc quyền cho POS Lễ tân
+TC-QR-06,3. Check-in QR (POS Lễ tân),"Xem lịch sử Check-in/Check-out có phân trang, lọc theo ngày và phân quyền dữ liệu",Đã có dữ liệu check-in trong bảng attendance_records,"1. Đăng nhập MEMBER xem bảng lịch sử tại /member (GET /checkins/history).
+2. Đăng nhập STAFF xem bảng lịch sử tại /staff.
+3. Lọc theo khoảng ngày from_date -> to_date.",GET /checkins/history?page=1&size=15&from_date=2026-11-01&to_date=2026-11-30,HTTP 200 OK. MEMBER chỉ thấy các lượt check-in của chính mình; STAFF/ADMIN thấy toàn bộ hội viên kèm tổng số người đang tập trong phòng (active_in_gym_count).,"HTTP 200 OK. Phân trang và bộ lọc ngày hoạt động chính xác; MEMBER chỉ thấy lịch sử cá nhân, STAFF thấy toàn bộ phòng gym.",PASS,TV3 (Task T067E45)
+TC-QR-07,3. Check-in QR (POS Lễ tân),"Tự động cộng chuỗi ngày tập (Streak) và mở khóa Huy hiệu (10, 30, 100 buổi)",Hội viên thực hiện check-in tại quầy POS,"1. Lễ tân quét mã QR check-in cho hội viên.
+2. Kiểm tra chỉ số streak_days, total_checkins và danh sách badges trả về.","POST /checkins/qr
+{'qr_code': 'DG-000006'}","Tự động tính lại chuỗi ngày tập liên tiếp (streak_days), tăng total_checkins và mở khóa huy hiệu tương ứng (10, 30, 100 buổi) hiển thị trên thẻ hội viên.","Cập nhật tức thì streak_days và huy hiệu 'Tân Binh Kỷ Luật (10 buổi)', 'Chiến Binh Bền Bỉ (30 buổi)'.",PASS,TV3 (Bonus T3CD518)
+TC-QR-08,3. Check-in QR (POS Lễ tân),Kiểm tra hiệu năng thời gian phản hồi API Quét QR Check-in (< 1 giây),CSDL đã đánh Index ix_member_cards_card_code và ix_subscriptions_member_status,"1. Thực hiện 10 lần quét QR liên tiếp tại màn POS Lễ tân.
+2. Đo trường response_time_ms trả về từ API.",10 requests POST /checkins/qr liên tiếp,100% request có thời gian xử lý < 1000ms (1 giây) nhờ sử dụng Index trên cột card_code và member_id.,"Thời gian phản hồi trung bình đạt 5ms - 18ms (< 0.02 giây), nhanh hơn rất nhiều so với ngưỡng yêu cầu 1 giây.",PASS,"TV1 & TV3 (Task T067CF6, T067E27)"
+
+NHẬT KÝ LỖI PHÁT HIỆN & BÁO CÁO SỬA LỖI (BUG LOG)
+Mã Bug,Module / File lỗi,Mức độ,Mô tả lỗi phát hiện khi chạy thử,Người phụ trách,Trạng thái khắc phục
+BUG-01,Frontend / src/pages/MemberPage.jsx (Dòng 3),Critical (Blocker),"Gõ thừa ký tự 'D' ở cuối câu lệnh import (`import { QRCodeSVG } from ""qrcode.react"";D`) làm văng lỗi `Uncaught ReferenceError: D is not defined`, khiến toàn bộ ứng dụng bị trắng màn hình ngay khi khởi chạy.",TV5 (FE Dev),FIXED (Đã xóa ký tự thừa và kiểm thử lại PASS)
+BUG-02,Frontend / package.json & vite.config.js,High,"Thư viện `qrcode.react` bị cài nhầm ở thư mục cha kèm `react@19.3.1` trong khi `frontend` dùng `react@18.3.1`, gây lỗi `Invalid hook call (useMemo of null)` làm trắng màn hình sau khi đăng nhập vào `/member`.",TV4 & TV5 (FE),FIXED (Đã thêm qrcode.react vào frontend/package.json và cấu hình dedupe react trong vite.config.js)
+BUG-03,Backend / app/schemas/user.py & app/db/seed.py,High,"1. `app/schemas/__init__.py` import `PasswordChange` từ `app.schemas.user` bị thiếu khi mở rộng schema BMI gây `ImportError`.
+2. Khi DB chưa chạy seed hoặc trùng SĐT cũ, đăng nhập tài khoản mẫu báo lỗi.",TV1 & TV2 (BE),FIXED (Đã bổ sung đầy đủ class schema và cơ chế auto-upsert seed khi đăng nhập)
