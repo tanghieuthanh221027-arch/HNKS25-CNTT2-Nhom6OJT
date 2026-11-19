@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from db.database import get_db
-from dependencies.auth import require_roles
-from models.enums import UserRole
-from models.user import User
-from schemas.user import UserResponse, UserUpdateSelf
-from service.user import update_my_profile
+from app.db.database import get_db
+from app.dependencies.auth import require_roles
+from app.models.enums import UserRole
+from app.models.user import User
+from app.schemas.user import UserResponse, UserUpdateSelf
+from app.services.user import update_my_profile
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

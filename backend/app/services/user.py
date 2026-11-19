@@ -1,9 +1,9 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from core.exception import BusinessRuleException, ConflictException
-from models.user import User
-from schemas.user import UserUpdateSelf
+from app.core.exception import BusinessRuleException, ConflictException
+from app.models.user import User
+from app.schemas.user import UserUpdateSelf
 
 
 def update_my_profile(
