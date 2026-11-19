@@ -41,7 +41,7 @@ const RegisterMember = () => {
         password: form.password,
       });
     } catch (requestError) {
-      setError(requestError.response?.data?.detail || "Đăng ký thất bại. Vui lòng thử lại.");
+      setError(requestError.response?.data?.message || requestError.response?.data?.detail || requestError.response?.data?.details?.[0]?.message || "Đăng ký thất bại. Vui lòng thử lại.");
       setLoading(false);
       return;
     }

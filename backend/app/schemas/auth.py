@@ -1,6 +1,5 @@
 from typing import Optional
-from pydantic import EmailStr
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.models.enums import UserRole
 from app.schemas.user import UserResponse
@@ -43,7 +42,15 @@ class LoginResponse(BaseModel):
     redirect_to: Optional[str] = None
 
 class RegisterRequest(BaseModel):
-    name: str
+    name: str = Field(min_length=2, max_length=100)
     email: EmailStr
-    phone: str
-    password: str
+    phone: str = Field(min_length=10, max_length=20)
+    password: str = Field(min_length=8)
+
+    @field_validator("password")
+    @classmethod
+    def validate_bcrypt_password_length(cls, value: str) -> str:
+        # bcrypt limits passwords by encoded bytes, including UTF-8 multibyte characters.
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Password must not exceed 72 UTF-8 bytes")
+        return value
