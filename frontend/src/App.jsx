@@ -11,6 +11,7 @@ import Unauthorized from "./pages/Unauthorized";
 import HomePage from "./pages/HomePage";
 import MembershipPage from "./pages/MembershipPage";
 import CheckInPage from "./pages/CheckInPage";
+import PTBookingPage from "./pages/PTBookingPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
