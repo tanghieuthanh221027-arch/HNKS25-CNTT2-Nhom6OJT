@@ -23,6 +23,7 @@ class Member(Base, TimestampMixin):
     __table_args__ = (
         Index("ix_members_full_name", "full_name"),
         Index("ix_members_status", "status"),
+        Index("ix_members_card_code", "card_code", unique=True),
     )
 
     member_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -36,6 +37,7 @@ class Member(Base, TimestampMixin):
     gender: Mapped[Gender] = mapped_column(enum_column(Gender, 10), nullable=False)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
     phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+    card_code: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
     email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     address: Mapped[str] = mapped_column(String(255), nullable=False)
     join_date: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)

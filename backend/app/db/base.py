@@ -2,6 +2,7 @@ from app.db.database import Base
 from app.models import (
     attendance_record,  # pyright: ignore[reportUnusedImport]
     audit_log,# pyright: ignore[reportUnusedImport]
+    equipment,# pyright: ignore[reportUnusedImport]
     feedback,# pyright: ignore[reportUnusedImport]
     invoice,# pyright: ignore[reportUnusedImport]
     member,# pyright: ignore[reportUnusedImport]
