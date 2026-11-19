@@ -1,5 +1,6 @@
 from app.models.attendance_record import AttendanceRecord
 from app.models.audit_log import AuditLog
+from app.models.equipment import Equipment
 from app.models.feedback import Feedback
 from app.models.invoice import Invoice
 from app.models.member import Member
@@ -15,6 +16,7 @@ from app.models.user import User
 __all__ = [
     "AttendanceRecord",
     "AuditLog",
+    "Equipment",
     "Feedback",
     "Invoice",
     "Member",
