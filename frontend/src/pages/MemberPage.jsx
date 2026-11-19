@@ -1,17 +1,54 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";D
 import { useAuth } from "../context/AuthContext";
 
 const workouts = [
-  { day: "HÔM NAY", time: "18:30", name: "Cardio & Kháng lực 1:1", trainer: "HLV Trần Tuấn Anh", place: "Studio A · Tầng 2", icon: "fitness_center" },
-  { day: "THỨ TƯ", time: "07:00", name: "Functional Training", trainer: "Lớp nhóm · Tối đa 8 người", place: "Studio B · Tầng 1", icon: "groups" },
-  { day: "THỨ SÁU", time: "17:00", name: "Tập luyện cùng PT", trainer: "HLV Nguyễn Minh Khoa", place: "Khu Functional", icon: "sports_gymnastics" },
+  {
+    day: "HÔM NAY",
+    time: "18:30",
+    name: "Cardio & Kháng lực 1:1",
+    trainer: "HLV Trần Tuấn Anh",
+    place: "Studio A · Tầng 2",
+    icon: "fitness_center",
+  },
+  {
+    day: "THỨ TƯ",
+    time: "07:00",
+    name: "Functional Training",
+    trainer: "Lớp nhóm · Tối đa 8 người",
+    place: "Studio B · Tầng 1",
+    icon: "groups",
+  },
+  {
+    day: "THỨ SÁU",
+    time: "17:00",
+    name: "Tập luyện cùng PT",
+    trainer: "HLV Nguyễn Minh Khoa",
+    place: "Khu Functional",
+    icon: "sports_gymnastics",
+  },
 ];
 
 const activities = [
-  { icon: "local_fire_department", title: "Buổi tập hoàn thành", value: "12 buổi", note: "Trong tháng này" },
-  { icon: "timer", title: "Thời gian tập", value: "18,5 giờ", note: "Tăng 12% so với tháng trước" },
-  { icon: "bolt", title: "Chuỗi ngày tập", value: "5 ngày", note: "Duy trì đều đặn tuần này" },
+  {
+    icon: "local_fire_department",
+    title: "Buổi tập hoàn thành",
+    value: "12 buổi",
+    note: "Trong tháng này",
+  },
+  {
+    icon: "timer",
+    title: "Thời gian tập",
+    value: "18,5 giờ",
+    note: "Tăng 12% so với tháng trước",
+  },
+  {
+    icon: "bolt",
+    title: "Chuỗi ngày tập",
+    value: "5 ngày",
+    note: "Duy trì đều đặn tuần này",
+  },
 ];
 
 const memberPageStyles = `
@@ -88,10 +125,12 @@ const memberPageStyles = `
 .member-pass-heading { width: 100%; display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 600; color: var(--member-muted); letter-spacing: .08em; }
 .member-online { display: inline-flex; align-items: center; gap: 5px; color: #4ade80; }
 .member-online i { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
-.member-qr { position: relative; width: 180px; height: 180px; padding: 16px; background: #fff; border-radius: 16px; display: grid; place-items: center; }
-.member-qr svg { width: 148px; height: 148px; fill: #0b1326; display: block; }
-.member-qr .qr-white { fill: #fff; }
-.member-qr-logo { position: absolute; background: var(--member-orange); color: #351400; padding: 6px; border-radius: 8px; }
+
+/* 2. Cập nhật CSS khung QR để hiển thị rõ nét nhất khi đưa vào webcam */
+.member-qr { position: relative; width: 188px; height: 188px; padding: 14px; background: #ffffff; border-radius: 16px; display: grid; place-items: center; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
+.member-qr svg { width: 160px; height: 160px; display: block; }
+.member-qr-logo { position: absolute; background: var(--member-orange); color: #351400; padding: 5px; border-radius: 8px; border: 3px solid #ffffff; display: grid; place-items: center; }
+
 .member-pass-card p { color: var(--member-muted); font-size: 13px; margin: 0; }
 .member-pass-card b { font-size: 15px; letter-spacing: .1em; color: #ffb690; }
 
@@ -154,7 +193,8 @@ const MemberPage = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  const fullName = user?.full_name || user?.name || user?.username || "Hội viên";
+  const fullName =
+    user?.full_name || user?.name || user?.username || "Hội viên";
   const initials = fullName
     .trim()
     .split(/\s+/)
@@ -163,9 +203,12 @@ const MemberPage = () => {
     .join("")
     .toUpperCase();
 
-  const memberCode = user?.user_id
-    ? `DG-${String(user.user_id).padStart(6, "0")}`
-    : "DG-MEMBER";
+  // Đây chính là chuỗi dữ liệu sẽ được mã hóa vào QR và gửi xuống Backend khi quét
+  const memberCode =
+    user?.member_code ||
+    (user?.user_id
+      ? `DG-${String(user.user_id).padStart(6, "0")}`
+      : "DG-000001");
 
   useEffect(() => {
     const closeMenu = (event) => {
@@ -198,8 +241,14 @@ const MemberPage = () => {
 
       <header className="member-header">
         <div className="member-nav">
-          <Link className="member-brand" to="/member" aria-label="Ducky Gym trang hội viên">
-            <span className="member-brand-icon material-symbols-outlined">fitness_center</span>
+          <Link
+            className="member-brand"
+            to="/member"
+            aria-label="Ducky Gym trang hội viên"
+          >
+            <span className="member-brand-icon material-symbols-outlined">
+              fitness_center
+            </span>
             <span>
               <b>DUCKY GYM</b>
               <small>PERFORMANCE CLUB</small>
@@ -207,7 +256,9 @@ const MemberPage = () => {
           </Link>
 
           <nav className="member-links" aria-label="Điều hướng hội viên">
-            <a className="is-current" href="#overview">Tổng quan</a>
+            <a className="is-current" href="#overview">
+              Tổng quan
+            </a>
             <a href="#schedule">Lịch tập</a>
             <a href="#activity">Hoạt động</a>
             <a href="#member-info">Hồ sơ</a>
@@ -224,7 +275,9 @@ const MemberPage = () => {
               <span className="member-avatar">{initials || "HV"}</span>
               <span className="member-account-name">
                 <b>{fullName}</b>
-                <small><i /> Hội viên</small>
+                <small>
+                  <i /> Hội viên
+                </small>
               </span>
               <span className="material-symbols-outlined member-chevron">
                 {menuOpen ? "expand_less" : "expand_more"}
@@ -233,10 +286,17 @@ const MemberPage = () => {
             {menuOpen && (
               <div className="member-menu" role="menu">
                 <button type="button" role="menuitem" onClick={showMemberInfo}>
-                  <span className="material-symbols-outlined">account_circle</span>
+                  <span className="material-symbols-outlined">
+                    account_circle
+                  </span>
                   Thông tin hội viên
                 </button>
-                <button type="button" role="menuitem" className="member-menu-logout" onClick={signOut}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="member-menu-logout"
+                  onClick={signOut}
+                >
                   <span className="material-symbols-outlined">logout</span>
                   Đăng xuất
                 </button>
@@ -254,12 +314,14 @@ const MemberPage = () => {
             <div className="member-welcome-card">
               <div className="member-welcome-copy">
                 <span className="member-badge">
-                  <span className="material-symbols-outlined">stars</span> HỘI VIÊN DUCKY GYM
+                  <span className="material-symbols-outlined">stars</span> HỘI
+                  VIÊN DUCKY GYM
                 </span>
                 <p className="member-eyebrow">CHÀO MỪNG TRỞ LẠI</p>
                 <h1>{fullName}</h1>
                 <p className="member-welcome-text">
-                  Mỗi buổi tập là một bước tiến. Cùng xem lịch tập và hoạt động gần đây của bạn.
+                  Mỗi buổi tập là một bước tiến. Cùng xem lịch tập và hoạt động
+                  gần đây của bạn.
                 </p>
               </div>
 
@@ -271,19 +333,29 @@ const MemberPage = () => {
                   <small className="member-stat-note">Định danh cá nhân</small>
                 </div>
                 <div>
-                  <span className="material-symbols-outlined">calendar_month</span>
+                  <span className="material-symbols-outlined">
+                    calendar_month
+                  </span>
                   <small>GÓI TẬP</small>
                   <b>Hội viên</b>
-                  <small className="member-stat-note">Xem chi tiết tại quầy</small>
+                  <small className="member-stat-note">
+                    Xem chi tiết tại quầy
+                  </small>
                 </div>
                 <div>
-                  <span className="material-symbols-outlined">sports_gymnastics</span>
+                  <span className="material-symbols-outlined">
+                    sports_gymnastics
+                  </span>
                   <small>BUỔI TẬP PT</small>
-                  <b>03 <em>/ 24 buổi</em></b>
+                  <b>
+                    03 <em>/ 24 buổi</em>
+                  </b>
                   <small className="member-stat-note">Đã hoàn thành</small>
                 </div>
                 <div>
-                  <span className="material-symbols-outlined">verified_user</span>
+                  <span className="material-symbols-outlined">
+                    verified_user
+                  </span>
                   <small>TRẠNG THÁI THẺ</small>
                   <b>Đang hoạt động</b>
                   <small className="member-stat-note">Hợp lệ check-in</small>
@@ -292,11 +364,15 @@ const MemberPage = () => {
 
               <div className="member-actions">
                 <a className="member-primary-button" href="#member-pass">
-                  <span className="material-symbols-outlined">qr_code_scanner</span>
+                  <span className="material-symbols-outlined">
+                    qr_code_scanner
+                  </span>
                   Mở thẻ check-in
                 </a>
                 <a className="member-secondary-button" href="#schedule">
-                  <span className="material-symbols-outlined">event_available</span>
+                  <span className="material-symbols-outlined">
+                    event_available
+                  </span>
                   Xem lịch tập
                 </a>
                 <Link className="member-secondary-button" to="/membership">
@@ -306,25 +382,29 @@ const MemberPage = () => {
               </div>
             </div>
 
+            {/* 3. Khu vực tạo mã QR thật tự động theo memberCode */}
             <aside className="member-pass-card" id="member-pass">
               <div className="member-pass-heading">
                 <span>THẺ HỘI VIÊN ĐIỆN TỬ</span>
-                <span className="member-online"><i /> SẴN SÀNG</span>
+                <span className="member-online">
+                  <i /> SẴN SÀNG
+                </span>
               </div>
-              <div className="member-qr" aria-label="Mã QR check-in minh họa">
-                <svg width="148" height="148" viewBox="0 0 160 160" role="img" aria-label="Mã QR minh họa">
-                  <rect width="46" height="46" x="0" y="0" rx="5" />
-                  <rect width="30" height="30" x="8" y="8" className="qr-white" />
-                  <rect width="14" height="14" x="16" y="16" rx="2" />
-                  <rect width="46" height="46" x="114" y="0" rx="5" />
-                  <rect width="30" height="30" x="122" y="8" className="qr-white" />
-                  <rect width="14" height="14" x="130" y="16" rx="2" />
-                  <rect width="46" height="46" x="0" y="114" rx="5" />
-                  <rect width="30" height="30" x="8" y="122" className="qr-white" />
-                  <rect width="14" height="14" x="16" y="130" rx="2" />
-                  <path d="M56 10h12v24H56zm20-2h18v12H76zm-12 36h32v10H64zm-54 12h24v10H10zm28 4h16v38H38zm26 8h28v28H64zm38-12h14v30h-14zm26 4h22v10h-22zm-4 20h16v26h-16zm-68 30h20v14H56zm30-2h16v38H86zm26 16h38v14h-38zm-48 12h14v18H64z" />
-                </svg>
-                <span className="member-qr-logo material-symbols-outlined">fitness_center</span>
+              <div
+                className="member-qr"
+                aria-label={`Mã QR check-in của ${memberCode}`}
+              >
+                <QRCodeSVG
+                  value={memberCode}
+                  size={160}
+                  bgColor="#ffffff"
+                  fgColor="#0b1326"
+                  level="H"
+                  includeMargin={false}
+                />
+                <span className="member-qr-logo material-symbols-outlined">
+                  fitness_center
+                </span>
               </div>
               <p>Đưa mã này cho nhân viên khi check-in</p>
               <b>{memberCode}</b>
@@ -341,26 +421,36 @@ const MemberPage = () => {
                 </div>
               </div>
               <a href="#schedule">
-                Xem toàn bộ lịch <span className="material-symbols-outlined">arrow_forward</span>
+                Xem toàn bộ lịch{" "}
+                <span className="material-symbols-outlined">arrow_forward</span>
               </a>
             </div>
             <div className="member-workouts">
               {workouts.map((workout) => (
-                <article className="member-workout" key={`${workout.day}-${workout.time}`}>
+                <article
+                  className="member-workout"
+                  key={`${workout.day}-${workout.time}`}
+                >
                   <div className="member-workout-time">
                     <small>{workout.day}</small>
                     <b>{workout.time}</b>
                   </div>
-                  <div className="member-workout-icon material-symbols-outlined">{workout.icon}</div>
+                  <div className="member-workout-icon material-symbols-outlined">
+                    {workout.icon}
+                  </div>
                   <div className="member-workout-info">
                     <h3>{workout.name}</h3>
                     <p>{workout.trainer}</p>
                     <small>
-                      <span className="material-symbols-outlined">location_on</span>
+                      <span className="material-symbols-outlined">
+                        location_on
+                      </span>
                       {workout.place}
                     </small>
                   </div>
-                  <span className="member-workout-arrow material-symbols-outlined">chevron_right</span>
+                  <span className="member-workout-arrow material-symbols-outlined">
+                    chevron_right
+                  </span>
                 </article>
               ))}
             </div>
@@ -391,13 +481,19 @@ const MemberPage = () => {
           <section className="member-info-card" id="member-info">
             <div className="member-info-header">
               <div>
-                <span className="material-symbols-outlined">account_circle</span>
+                <span className="material-symbols-outlined">
+                  account_circle
+                </span>
                 <div>
                   <h2>THÔNG TIN HỘI VIÊN</h2>
                   <p>Thông tin tài khoản đang đăng nhập</p>
                 </div>
               </div>
-              <button type="button" className="member-secondary-button" onClick={showMemberInfo}>
+              <button
+                type="button"
+                className="member-secondary-button"
+                onClick={showMemberInfo}
+              >
                 <span className="material-symbols-outlined">edit</span>
                 Cập nhật hồ sơ
               </button>
