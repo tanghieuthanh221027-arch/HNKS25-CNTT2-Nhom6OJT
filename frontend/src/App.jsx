@@ -23,18 +23,30 @@ function App() {
       <Route path="/membership" element={<MembershipPage />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
 
-      {/* Các trang cần đăng nhập */}
-      <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+      {/* Trang Quản trị ADMIN & Màn POS Lễ tân (STAFF / CASHIER) - Độc quyền sử dụng Kiosk Quét QR */}
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF", "CASHIER"]} />
+        }
+      >
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/staff" element={<AdminPage />} />
+        <Route path="/staff/check-in" element={<CheckInPage />} />
+        <Route path="/kiosk" element={<CheckInPage />} />
       </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["MEMBER"]} />}>
+      {/* Trang Hội viên (MEMBER) - Chỉ xem thẻ QR cá nhân để đưa cho Lễ tân quét */}
+      <Route element={<ProtectedRoute allowedRoles={["MEMBER", "ADMIN", "STAFF"]} />}>
         <Route path="/member" element={<MemberPage />} />
         <Route path="/member/profile" element={<MemberProfilePage />} />
-        <Route path="/member/check-in" element={<CheckInPage />} />
       </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={["PT"]} />}>
+      {/* Trang Huấn luyện viên (PT / TRAINER) */}
+      <Route
+        element={
+          <ProtectedRoute allowedRoles={["PT", "TRAINER", "ADMIN"]} />
+        }
+      >
         <Route path="/pt" element={<PTPage />} />
       </Route>
 
