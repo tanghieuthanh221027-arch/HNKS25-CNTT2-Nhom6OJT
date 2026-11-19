@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, model_validator
 
 from app.models.enums import AttendanceStatus
-from app.schemas.common import ORMModel
+from app.schemas.common import ORMModel, Page
 from app.schemas.summary import MemberSummary
 
 
@@ -52,3 +52,10 @@ class AttendanceFilter(BaseModel):
         if self.date_from and self.date_to and self.date_from > self.date_to:
             raise ValueError("date_from không được lớn hơn date_to")
         return self
+
+
+CheckinHistoryPage = Page[AttendanceDetailResponse]
+
+
+class ActiveCountResponse(BaseModel):
+    active_count: int = Field(ge=0, description="Số người đang tập tại thời điểm hiện tại")
