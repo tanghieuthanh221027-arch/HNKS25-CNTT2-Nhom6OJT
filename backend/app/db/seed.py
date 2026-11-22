@@ -53,7 +53,6 @@ def ensure_sql_views(db: Session) -> None:
         FROM invoices i
         WHERE i.status = 'PAID'
         GROUP BY DATE(i.created_at)
-        ORDER BY revenue_date DESC
         """,
         """
         CREATE OR REPLACE VIEW vw_monthly_revenue AS
@@ -66,7 +65,6 @@ def ensure_sql_views(db: Session) -> None:
         FROM invoices i
         WHERE i.status = 'PAID'
         GROUP BY DATE_FORMAT(i.created_at, '%Y-%m')
-        ORDER BY revenue_month DESC
         """,
         """
         CREATE OR REPLACE VIEW vw_top_gym_plans AS
@@ -76,14 +74,25 @@ def ensure_sql_views(db: Session) -> None:
             mp.category,
             mp.duration_days,
             mp.price,
-            COUNT(s.subscription_id) AS total_subscriptions,
-            SUM(CASE WHEN s.status = 'ACTIVE' THEN 1 ELSE 0 END) AS active_subscriptions,
-            COALESCE(SUM(CASE WHEN i.status = 'PAID' THEN i.final_amount ELSE 0 END), 0) AS total_revenue
+            (
+                SELECT COUNT(*)
+                FROM subscriptions s
+                WHERE s.plan_id = mp.plan_id
+            ) AS total_subscriptions,
+            (
+                SELECT COUNT(*)
+                FROM subscriptions s
+                WHERE s.plan_id = mp.plan_id
+                  AND s.status = 'ACTIVE'
+            ) AS active_subscriptions,
+            COALESCE((
+                SELECT SUM(i.final_amount)
+                FROM subscriptions s
+                INNER JOIN invoices i ON i.subscription_id = s.subscription_id
+                WHERE s.plan_id = mp.plan_id
+                  AND i.status = 'PAID'
+            ), 0) AS total_revenue
         FROM membership_plans mp
-        LEFT JOIN subscriptions s ON s.plan_id = mp.plan_id
-        LEFT JOIN invoices i ON i.subscription_id = s.subscription_id
-        GROUP BY mp.plan_id, mp.plan_name, mp.category, mp.duration_days, mp.price
-        ORDER BY total_subscriptions DESC, total_revenue DESC
         """,
         """
         CREATE OR REPLACE VIEW vw_monthly_new_members AS
@@ -92,15 +101,15 @@ def ensure_sql_views(db: Session) -> None:
             COUNT(m.member_id) AS new_members_count
         FROM members m
         GROUP BY DATE_FORMAT(m.join_date, '%Y-%m')
-        ORDER BY join_month DESC
         """,
     ]
-    for view_sql in views:
-        try:
+    try:
+        for view_sql in views:
             db.execute(text(view_sql))
-            db.commit()
-        except Exception:
-            db.rollback()
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
 
 
 def _upsert_user(

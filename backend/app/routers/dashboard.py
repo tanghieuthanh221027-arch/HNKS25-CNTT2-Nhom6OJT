@@ -53,7 +53,7 @@ def get_dashboard_summary(
     ).mappings().all()
 
     top_plans_rows = db.execute(
-        text("SELECT plan_id, plan_name, category, duration_days, price, total_subscriptions, active_subscriptions, total_revenue FROM vw_top_gym_plans")
+        text("SELECT plan_id, plan_name, category, duration_days, price, total_subscriptions, active_subscriptions, total_revenue FROM vw_top_gym_plans ORDER BY total_subscriptions DESC, total_revenue DESC, plan_id ASC")
     ).mappings().all()
 
     monthly_members_rows = db.execute(
