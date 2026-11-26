@@ -183,8 +183,9 @@ def auth_h(token: str) -> dict[str, str]:
 # MODULE 01: SYSTEM & OPENAPI HEALTH (TC-SYS-01 .. TC-SYS-02)
 # ==============================================================================
 def test_tc_sys_01_health_check(client: TestClient):
-    res = client.get("/health")
+    res = client.get("/health", headers={"Origin": "http://192.168.1.88:5173"})
     assert res.status_code == 200
+    assert res.headers.get("access-control-allow-origin") == "http://192.168.1.88:5173"
     body = res.json()
     assert body["success"] is True
     assert "MySQL: connected" in body["database"]

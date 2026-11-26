@@ -2,8 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { resolveApiBaseUrl } from "../api/axiosClient";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const API_BASE = resolveApiBaseUrl();
 
 const ROLE_PRESETS = [
   {
@@ -477,7 +478,7 @@ const SystemTestLabPage = () => {
       setHealthState({
         ok: false,
         latencyMs: null,
-        db: "Mất kết nối tới Backend (http://127.0.0.1:8000)",
+        db: `Mất kết nối tới Backend (${API_BASE})`,
       });
     }
   }, []);

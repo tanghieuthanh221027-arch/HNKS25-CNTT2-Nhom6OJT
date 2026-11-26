@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { resolveApiBaseUrl } from "../api/axiosClient";
 import "./Login.css";
 
 const DEMO_ACCOUNTS = [
@@ -46,7 +47,7 @@ const Login = () => {
     } catch (requestError) {
       if (!requestError.response) {
         setError(
-          "Không kết nối được tới máy chủ Backend (http://127.0.0.1:8000). Hãy kiểm tra cửa sổ terminal đang chạy uvicorn app.main:app --reload!"
+          `Không kết nối được tới máy chủ Backend (${resolveApiBaseUrl()}). Hãy kiểm tra cửa sổ terminal đang chạy uvicorn app.main:app --host 0.0.0.0 --port 8000!`
         );
       } else {
         setError(
