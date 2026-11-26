@@ -1,9 +1,10 @@
 from datetime import date
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.timezone_utils import today_vn
 from app.db.database import Base
 from app.models.enums import Gender, MemberStatus, enum_column
 from app.models.mixins import TimestampMixin
@@ -19,31 +20,31 @@ if TYPE_CHECKING:
 
 
 class Member(Base, TimestampMixin):
+    """
+    Bảng hồ sơ mở rộng của Hội viên (Profile 1-1 với bảng users).
+    Đã chuẩn hoá 3NF (Mục 3.2.1 & 3.2.2): xoá bỏ dư thừa full_name, email, phone tại bảng members,
+    dùng chung định danh duy nhất từ bảng users qua khoá ngoại user_id (NOT NULL, UNIQUE, ON DELETE RESTRICT).
+    """
+
     __tablename__ = "members"
-    __table_args__ = (
-        Index("ix_members_full_name", "full_name"),
-        Index("ix_members_status", "status"),
-    )
+    __table_args__ = (Index("ix_members_status", "status"),)
 
     member_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[Optional[int]] = mapped_column(
+    user_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("users.user_id", ondelete="SET NULL", onupdate="CASCADE"),
-        nullable=True,
+        ForeignKey("users.user_id", ondelete="RESTRICT", onupdate="CASCADE"),
+        nullable=False,
         unique=True,
     )
-    full_name: Mapped[str] = mapped_column(String(100), nullable=False)
     gender: Mapped[Gender] = mapped_column(enum_column(Gender, 10), nullable=False)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
-    phone: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
-    email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     address: Mapped[str] = mapped_column(String(255), nullable=False)
-    join_date: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)
+    join_date: Mapped[date] = mapped_column(Date, nullable=False, default=today_vn)
     status: Mapped[MemberStatus] = mapped_column(
         enum_column(MemberStatus, 20), nullable=False, default=MemberStatus.ACTIVE
     )
 
-    user: Mapped[Optional["User"]] = relationship(back_populates="member")
+    user: Mapped["User"] = relationship(back_populates="member", lazy="joined")
     subscriptions: Mapped[list["Subscription"]] = relationship(
         back_populates="member", order_by="Subscription.start_date.desc()"
     )
@@ -62,8 +63,20 @@ class Member(Base, TimestampMixin):
     feedbacks: Mapped[list["Feedback"]] = relationship(back_populates="member")
 
     @property
+    def full_name(self) -> str:
+        return self.user.full_name if self.user else f"Hội viên #{self.member_id}"
+
+    @property
+    def email(self) -> str:
+        return self.user.email if self.user else ""
+
+    @property
+    def phone(self) -> str:
+        return self.user.phone if self.user else ""
+
+    @property
     def is_active(self) -> bool:
         return self.status == MemberStatus.ACTIVE
 
     def __repr__(self) -> str:
-        return f"<Member id={self.member_id} name={self.full_name!r}>"
+        return f"<Member id={self.member_id} user_id={self.user_id}>"

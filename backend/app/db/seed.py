@@ -6,8 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.core.qr_utils import generate_card_code, generate_qr_base64
 from app.core.security import hash_password
+from app.core.timezone_utils import now_vn, today_vn
 from app.db.base import Base
 from app.db.database import SessionLocal, engine
+from app.db.schema_upgrade import upgrade_mysql_schema
 from app.models.attendance_record import AttendanceRecord
 from app.models.body_metric import BodyMetric
 from app.models.discount import Discount
@@ -53,7 +55,6 @@ def ensure_sql_views(db: Session) -> None:
         FROM invoices i
         WHERE i.status = 'PAID'
         GROUP BY DATE(i.created_at)
-        ORDER BY revenue_date DESC
         """,
         """
         CREATE OR REPLACE VIEW vw_monthly_revenue AS
@@ -66,7 +67,6 @@ def ensure_sql_views(db: Session) -> None:
         FROM invoices i
         WHERE i.status = 'PAID'
         GROUP BY DATE_FORMAT(i.created_at, '%Y-%m')
-        ORDER BY revenue_month DESC
         """,
         """
         CREATE OR REPLACE VIEW vw_top_gym_plans AS
@@ -76,14 +76,25 @@ def ensure_sql_views(db: Session) -> None:
             mp.category,
             mp.duration_days,
             mp.price,
-            COUNT(s.subscription_id) AS total_subscriptions,
-            SUM(CASE WHEN s.status = 'ACTIVE' THEN 1 ELSE 0 END) AS active_subscriptions,
-            COALESCE(SUM(CASE WHEN i.status = 'PAID' THEN i.final_amount ELSE 0 END), 0) AS total_revenue
+            (
+                SELECT COUNT(*)
+                FROM subscriptions s
+                WHERE s.plan_id = mp.plan_id
+            ) AS total_subscriptions,
+            (
+                SELECT COUNT(*)
+                FROM subscriptions s
+                WHERE s.plan_id = mp.plan_id
+                  AND s.status = 'ACTIVE'
+            ) AS active_subscriptions,
+            COALESCE((
+                SELECT SUM(i.final_amount)
+                FROM subscriptions s
+                INNER JOIN invoices i ON i.subscription_id = s.subscription_id
+                WHERE s.plan_id = mp.plan_id
+                  AND i.status = 'PAID'
+            ), 0) AS total_revenue
         FROM membership_plans mp
-        LEFT JOIN subscriptions s ON s.plan_id = mp.plan_id
-        LEFT JOIN invoices i ON i.subscription_id = s.subscription_id
-        GROUP BY mp.plan_id, mp.plan_name, mp.category, mp.duration_days, mp.price
-        ORDER BY total_subscriptions DESC, total_revenue DESC
         """,
         """
         CREATE OR REPLACE VIEW vw_monthly_new_members AS
@@ -92,7 +103,6 @@ def ensure_sql_views(db: Session) -> None:
             COUNT(m.member_id) AS new_members_count
         FROM members m
         GROUP BY DATE_FORMAT(m.join_date, '%Y-%m')
-        ORDER BY join_month DESC
         """,
     ]
     for view_sql in views:
@@ -162,9 +172,10 @@ def seed_all(db: Session) -> dict[str, int]:
     - 4 Lớp tập nhóm (Group Classes)
     """
     Base.metadata.create_all(bind=engine)
+    upgrade_mysql_schema(db)
     ensure_sql_views(db)
 
-    today = date.today()
+    today = today_vn()
     default_pw = hash_password("Admin123")
     staff_pw = hash_password("Staff123")
     pt_pw = hash_password("Trainer123")
@@ -246,12 +257,13 @@ def seed_all(db: Session) -> dict[str, int]:
         )
         pt_users.append(pt)
 
-    # 3. Seed 5 Gói tập (Gym Plans)
+    # 3. Seed 5 Gói tập (Gym Plans - kèm định mức số buổi PT)
     plan_specs = [
         (
             "Starter 1 Tháng",
             "Gói Cơ Bản",
             30,
+            3,
             Decimal("499000.00"),
             "Tập luyện không giới hạn khung giờ, tủ đồ cá nhân, tặng 3 buổi PT định hướng.",
         ),
@@ -259,6 +271,7 @@ def seed_all(db: Session) -> dict[str, int]:
             "Pro Fitness 3 Tháng",
             "Gói Tiêu Chuẩn",
             90,
+            5,
             Decimal("1290000.00"),
             "Full quyền lợi khu Cardio & Free Weights, đo InBody định kỳ hàng tháng.",
         ),
@@ -266,6 +279,7 @@ def seed_all(db: Session) -> dict[str, int]:
             "Pro Fitness 6 Tháng",
             "Gói Phổ Biến",
             180,
+            7,
             Decimal("2394000.00"),
             "Tặng 7 ngày PT hướng dẫn, tham gia lớp Yoga & HIIT mỗi tuần, sử dụng khu Sauna đá muối.",
         ),
@@ -273,6 +287,7 @@ def seed_all(db: Session) -> dict[str, int]:
             "VIP Elite 12 Tháng",
             "Gói Cao Cấp",
             365,
+            12,
             Decimal("3840000.00"),
             "Toàn bộ quyền lợi Pro, dẫn theo 1 bạn tập miễn phí cuối tuần, khăn tập & nước uống miễn phí.",
         ),
@@ -280,23 +295,29 @@ def seed_all(db: Session) -> dict[str, int]:
             "Coaching PT 1-1 (10 Buổi)",
             "Gói Huấn Luyện Viên",
             60,
+            10,
             Decimal("4500000.00"),
             "10 buổi tập 1-1 độc quyền cùng Master Trainer, giáo án và thực đơn thiết kế riêng.",
         ),
     ]
     plans: list[MembershipPlan] = []
-    for pname, cat, days, price, desc in plan_specs:
+    for pname, cat, days, pt_sess, price, desc in plan_specs:
         plan = db.query(MembershipPlan).filter(MembershipPlan.plan_name == pname).first()
         if not plan:
             plan = MembershipPlan(
                 plan_name=pname,
                 category=cat,
                 duration_days=days,
+                pt_sessions=pt_sess,
                 price=price,
                 description=desc,
                 status=PlanStatus.ACTIVE,
             )
             db.add(plan)
+            db.commit()
+            db.refresh(plan)
+        elif plan.pt_sessions == 0:
+            plan.pt_sessions = pt_sess
             db.commit()
             db.refresh(plan)
         plans.append(plan)
@@ -402,26 +423,13 @@ def seed_all(db: Session) -> dict[str, int]:
                 role=UserRole.MEMBER,
             )
 
-            m = (
-                db.query(Member)
-                .filter(
-                    or_(
-                        Member.user_id == u.user_id,
-                        Member.phone == u.phone,
-                        Member.email == u.email,
-                    )
-                )
-                .first()
-            )
+            m = db.query(Member).filter(Member.user_id == u.user_id).first()
             if not m:
                 join_offset = (idx * 7) % 120
                 m = Member(
                     user_id=u.user_id,
-                    full_name=full_name,
                     gender=gender,
                     date_of_birth=date(1995 + (idx % 10), (idx % 12) + 1, (idx % 25) + 1),
-                    phone=u.phone,
-                    email=u.email,
                     address=f"Số {idx * 12} Nguyễn Trãi, Hà Đông, Hà Nội",
                     join_date=today - timedelta(days=join_offset),
                     status=MemberStatus.ACTIVE,
@@ -479,6 +487,8 @@ def seed_all(db: Session) -> dict[str, int]:
                     subscription_type=sub_type,
                     start_date=start_dt,
                     end_date=end_dt,
+                    total_sessions=chosen_plan.pt_sessions,
+                    sessions_remaining=chosen_plan.pt_sessions,
                     status=sub_status,
                 )
                 db.add(sub)
@@ -547,52 +557,92 @@ def seed_all(db: Session) -> dict[str, int]:
         except Exception:
             db.rollback()
 
-    # 7. Seed Lịch làm việc PT & Booking mẫu
+    # 7. Seed Lịch ca trực mở của PT (TrainerSchedule) trước 60 ngày & Booking mẫu (Mục 5.3)
     try:
         monday = today - timedelta(days=today.weekday())
         first_member = db.query(Member).order_by(Member.member_id.asc()).first()
+        first_sub = (
+            db.query(Subscription)
+            .filter(
+                Subscription.member_id == first_member.member_id,
+                Subscription.status == SubscriptionStatus.ACTIVE,
+            )
+            .order_by(Subscription.end_date.desc())
+            .first()
+            if first_member
+            else None
+        )
+        existing_keys = {
+            (r.trainer_id, r.work_date, r.start_time)
+            for r in db.query(
+                TrainerSchedule.trainer_id,
+                TrainerSchedule.work_date,
+                TrainerSchedule.start_time,
+            )
+            .filter(TrainerSchedule.work_date >= monday)
+            .all()
+        }
+        new_schedules: list[TrainerSchedule] = []
+        standard_hours = (7, 8, 9, 10, 14, 15, 16, 17, 18, 19, 20)
         for pt in pt_users:
-            for day_offset in range(0, 7):
+            for day_offset in range(0, 62):
                 w_date = monday + timedelta(days=day_offset)
-                for hour in (7, 9, 14, 16, 18):
+                for hour in standard_hours:
                     st_time = time(hour, 0)
+                    if (pt.user_id, w_date, st_time) in existing_keys:
+                        continue
                     en_time = time(hour + 1, 0)
-                    sched = (
-                        db.query(TrainerSchedule)
-                        .filter(
-                            TrainerSchedule.trainer_id == pt.user_id,
-                            TrainerSchedule.work_date == w_date,
-                            TrainerSchedule.start_time == st_time,
-                        )
-                        .first()
-                    )
-                    if not sched:
-                        sched = TrainerSchedule(
+                    new_schedules.append(
+                        TrainerSchedule(
                             trainer_id=pt.user_id,
                             work_date=w_date,
                             start_time=st_time,
                             end_time=en_time,
+                            start_at=datetime.combine(w_date, st_time),
+                            end_at=datetime.combine(w_date, en_time),
                             status=ScheduleStatus.ACTIVE,
                         )
-                        db.add(sched)
-                        db.flush()
+                    )
+        if new_schedules:
+            db.add_all(new_schedules)
+            db.flush()
 
-                        if (
-                            first_member
-                            and pt.user_id == pt_users[0].user_id
-                            and day_offset in (1, 3)
-                            and hour == 18
-                        ):
-                            bk = TrainingBooking(
-                                member_id=first_member.member_id,
-                                trainer_id=pt.user_id,
-                                schedule_id=sched.schedule_id,
-                                booking_date=w_date,
-                                start_time=st_time,
-                                end_time=en_time,
-                                status=BookingStatus.CONFIRMED if day_offset == 1 else BookingStatus.PENDING,
-                            )
-                            db.add(bk)
+        # Tạo 1 booking mẫu trong tương lai gần cho first_member nếu chưa có booking nào trong tuần
+        if first_member and first_sub and pt_users:
+            sample_day = today + timedelta(days=2)
+            sample_st = time(18, 0)
+            sample_en = time(19, 0)
+            has_bk = (
+                db.query(TrainingBooking)
+                .filter(
+                    TrainingBooking.member_id == first_member.member_id,
+                    TrainingBooking.booking_date >= monday,
+                )
+                .first()
+            )
+            sample_sched = (
+                db.query(TrainerSchedule)
+                .filter(
+                    TrainerSchedule.trainer_id == pt_users[0].user_id,
+                    TrainerSchedule.work_date == sample_day,
+                    TrainerSchedule.start_time == sample_st,
+                )
+                .first()
+            )
+            if not has_bk and sample_sched:
+                bk = TrainingBooking(
+                    member_id=first_member.member_id,
+                    trainer_id=pt_users[0].user_id,
+                    subscription_id=first_sub.subscription_id,
+                    schedule_id=sample_sched.schedule_id,
+                    booking_date=sample_day,
+                    start_time=sample_st,
+                    end_time=sample_en,
+                    start_at=datetime.combine(sample_day, sample_st),
+                    end_at=datetime.combine(sample_day, sample_en),
+                    status=BookingStatus.CONFIRMED,
+                )
+                db.add(bk)
         db.commit()
     except Exception:
         db.rollback()

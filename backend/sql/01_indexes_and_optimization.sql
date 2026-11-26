@@ -5,9 +5,9 @@
 
 USE duckygym;
 
--- 1. Index tìm kiếm hội viên theo Số điện thoại (SĐT) trên bảng users và members
+-- 1. Index tìm kiếm hội viên theo Số điện thoại (SĐT) trên bảng users & liên kết 3NF sang members
 CREATE INDEX ix_users_phone_lookup ON users (phone);
-CREATE INDEX ix_members_phone_lookup ON members (phone, status);
+CREATE INDEX ix_members_user_status ON members (user_id, status);
 
 -- 2. Index tìm kiếm thẻ hội viên theo Mã QR (card_code) trên bảng member_cards
 CREATE INDEX ix_member_cards_qr_lookup ON member_cards (card_code, user_id);

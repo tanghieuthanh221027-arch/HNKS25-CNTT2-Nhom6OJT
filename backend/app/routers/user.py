@@ -1,4 +1,3 @@
-from datetime import date
 from decimal import Decimal
 from typing import Any, Optional
 
@@ -6,6 +5,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
+from app.core.timezone_utils import today_vn
 from app.db.database import get_db
 from app.dependencies.auth import get_current_user, require_roles
 from app.models.body_metric import BodyMetric
@@ -90,7 +90,7 @@ def create_body_metric(
     bmi = round(
         payload.weight_kg / ((payload.height_cm / Decimal("100")) ** 2), 1
     )
-    rec_date = payload.recorded_date or date.today()
+    rec_date = payload.recorded_date or today_vn()
     bm = BodyMetric(
         user_id=current_user.user_id,
         recorded_date=rec_date,
@@ -142,21 +142,21 @@ def search_members(
 ) -> list[dict[str, Any]]:
     query = (
         db.query(Member, User, MemberCard)
-        .outerjoin(User, User.user_id == Member.user_id)
+        .join(User, User.user_id == Member.user_id)
         .outerjoin(MemberCard, MemberCard.member_id == Member.member_id)
     )
     if keyword and keyword.strip():
         kw = f"%{keyword.strip()}%"
         query = query.filter(
             or_(
-                Member.phone.ilike(kw),
-                Member.full_name.ilike(kw),
-                Member.email.ilike(kw),
+                User.phone.ilike(kw),
+                User.full_name.ilike(kw),
+                User.email.ilike(kw),
                 MemberCard.card_code.ilike(kw),
             )
         )
     rows = query.order_by(Member.member_id.asc()).limit(limit).all()
-    today = date.today()
+    today = today_vn()
     results = []
     for member, user, card in rows:
         latest_sub = (
@@ -179,6 +179,8 @@ def search_members(
                 "plan_name": plan.plan_name,
                 "start_date": sub.start_date,
                 "end_date": sub.end_date,
+                "total_sessions": sub.total_sessions,
+                "sessions_remaining": sub.sessions_remaining,
                 "status": "EXPIRED" if (sub.status == SubscriptionStatus.ACTIVE and sub.end_date < today) else sub.status.value,
                 "days_remaining": days_left,
             }

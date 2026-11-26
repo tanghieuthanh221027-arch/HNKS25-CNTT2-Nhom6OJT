@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.exception import ConflictException, ForbiddenException, UnauthorizedException
 from app.core.qr_utils import generate_card_code, generate_qr_base64
 from app.core.security import create_access_token, hash_password, verify_password
+from app.core.timezone_utils import today_vn
 from app.db.seed import seed_all
 from app.models.enums import Gender, MemberStatus, UserRole
 from app.models.member import Member
@@ -13,30 +14,18 @@ from app.schemas.auth import LoginRequest, RegisterRequest
 
 
 def ensure_member_and_card(db: Session, user: User) -> tuple[Member | None, MemberCard | None]:
-    """Đảm bảo mọi tài khoản MEMBER đều có bản ghi Member và thẻ điện tử MemberCard có QR."""
+    """Đảm bảo mọi tài khoản MEMBER đều có bản ghi hồ sơ mở rộng Member (1-1 với users) và thẻ điện tử MemberCard."""
     if user.role != UserRole.MEMBER:
         return None, None
 
     member = db.query(Member).filter(Member.user_id == user.user_id).first()
     if not member:
-        member = (
-            db.query(Member)
-            .filter((Member.email == user.email) | (Member.phone == user.phone))
-            .first()
-        )
-        if member and member.user_id is None:
-            member.user_id = user.user_id
-            db.flush()
-    if not member:
         member = Member(
             user_id=user.user_id,
-            full_name=user.full_name,
             gender=Gender.MALE,
             date_of_birth=date(2000, 1, 1),
-            phone=user.phone,
-            email=user.email,
             address="Hà Nội",
-            join_date=date.today(),
+            join_date=today_vn(),
             status=MemberStatus.ACTIVE,
         )
         db.add(member)
@@ -107,7 +96,6 @@ def _find_user_by_login(db: Session, login_id: str) -> User | None:
 def authenticate_user(db: Session, login_data: LoginRequest) -> dict:
     user = _find_user_by_login(db, login_data.username)
 
-    # Nếu chưa tìm thấy tài khoản mẫu (do DB chưa chạy seed_all), tự động seed ngay lập tức
     if not user or not verify_password(login_data.password, user.password_hash):
         try:
             seed_all(db)

@@ -20,13 +20,13 @@ class MemberCard(Base, TimestampMixin):
     )
     user_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("users.user_id", ondelete="CASCADE", onupdate="CASCADE"),
+        ForeignKey("users.user_id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
         unique=True,
     )
     member_id: Mapped[Optional[int]] = mapped_column(
         Integer,
-        ForeignKey("members.member_id", ondelete="SET NULL", onupdate="CASCADE"),
+        ForeignKey("members.member_id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=True,
     )
     card_code: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)

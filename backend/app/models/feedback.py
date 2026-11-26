@@ -31,7 +31,7 @@ class Feedback(Base, CreatedAtMixin):
     feedback_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     member_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("members.member_id", ondelete="CASCADE", onupdate="CASCADE"),
+        ForeignKey("members.member_id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
     )
     handled_by: Mapped[Optional[int]] = mapped_column(

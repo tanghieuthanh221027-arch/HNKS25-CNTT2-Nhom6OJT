@@ -11,6 +11,7 @@ import Unauthorized from "./pages/Unauthorized";
 import HomePage from "./pages/HomePage";
 import MembershipPage from "./pages/MembershipPage";
 import CheckInPage from "./pages/CheckInPage";
+import SystemTestLabPage from "./pages/SystemTestLabPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -22,6 +23,13 @@ function App() {
       <Route path="/register" element={<RegisterMember />} />
       <Route path="/membership" element={<MembershipPage />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
+
+      {/* Màn hình Chạy thử Code & Kiểm thử Hệ thống - Tách riêng độc lập, ĐỘC QUYỀN ADMIN */}
+      <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+        <Route path="/pages/test-lab" element={<SystemTestLabPage />} />
+        <Route path="/admin/test-lab" element={<SystemTestLabPage />} />
+        <Route path="/test-lab" element={<Navigate to="/pages/test-lab" replace />} />
+      </Route>
 
       {/* Trang Quản trị ADMIN & Màn POS Lễ tân (STAFF / CASHIER) - Độc quyền sử dụng Kiosk Quét QR */}
       <Route

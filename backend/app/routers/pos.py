@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.exception import BusinessRuleException, NotFoundException
 from app.core.qr_utils import generate_card_code, generate_qr_base64
 from app.core.security import hash_password
+from app.core.timezone_utils import now_vn, today_vn
 from app.db.database import get_db
 from app.dependencies.auth import require_staff_or_admin
 from app.models.discount import Discount
@@ -58,11 +59,12 @@ def lookup_member_by_phone(
     clean_phone = phone.strip()
     member = (
         db.query(Member)
+        .join(User, User.user_id == Member.user_id)
         .filter(
             or_(
-                Member.phone == clean_phone,
-                Member.phone.ilike(f"%{clean_phone}%"),
-                Member.full_name.ilike(f"%{clean_phone}%"),
+                User.phone == clean_phone,
+                User.phone.ilike(f"%{clean_phone}%"),
+                User.full_name.ilike(f"%{clean_phone}%"),
             )
         )
         .first()
@@ -75,7 +77,7 @@ def lookup_member_by_phone(
         }
 
     card = db.query(MemberCard).filter(MemberCard.member_id == member.member_id).first()
-    today = date.today()
+    today = today_vn()
     latest_sub = (
         db.query(Subscription, MembershipPlan)
         .join(MembershipPlan, MembershipPlan.plan_id == Subscription.plan_id)
@@ -135,41 +137,46 @@ def pos_checkout(
     if not plan:
         raise NotFoundException("Gói tập không tồn tại hoặc đã ngừng kinh doanh.")
 
-    today = date.today()
+    today = today_vn()
 
     try:
-        # 1. Tìm hoặc tạo nhanh hội viên tại quầy trong cùng 1 transaction
-        member = db.query(Member).filter(Member.phone == clean_phone).first()
+        # 1. Tìm hoặc tạo nhanh hội viên tại quầy trong cùng 1 transaction (Chuẩn 3NF: User <-> Member 1-1)
+        existing_user = db.query(User).filter(User.phone == clean_phone).first()
+        member = (
+            db.query(Member).filter(Member.user_id == existing_user.user_id).first()
+            if existing_user
+            else None
+        )
         if not member:
-            if not payload.full_name or len(payload.full_name.strip()) < 2:
-                raise BusinessRuleException(
-                    "Không tìm thấy hội viên theo SĐT này. Vui lòng nhập Họ và tên để tạo hồ sơ hội viên mới tại quầy."
+            if existing_user and existing_user.role != UserRole.MEMBER:
+                raise BusinessRuleException("Số điện thoại này thuộc tài khoản nhân sự, không thể đăng ký hội viên.")
+            if not existing_user:
+                if not payload.full_name or len(payload.full_name.strip()) < 2:
+                    raise BusinessRuleException(
+                        "Không tìm thấy hội viên theo SĐT này. Vui lòng nhập Họ và tên để tạo hồ sơ hội viên mới tại quầy."
+                    )
+                auto_email = (
+                    payload.email.strip().lower()
+                    if (payload.email and payload.email.strip())
+                    else f"pos_{clean_phone}@duckygym.vn"
                 )
-            auto_email = (
-                payload.email.strip().lower()
-                if (payload.email and payload.email.strip())
-                else f"pos_{clean_phone}@duckygym.vn"
-            )
-            auto_username = f"hv_{clean_phone}"
-            new_user = User(
-                username=auto_username,
-                password_hash=hash_password("Member123"),
-                full_name=payload.full_name.strip(),
-                email=auto_email,
-                phone=clean_phone,
-                role=UserRole.MEMBER,
-                status=UserStatus.ACTIVE,
-            )
-            db.add(new_user)
-            db.flush()
+                auto_username = f"hv_{clean_phone}"
+                existing_user = User(
+                    username=auto_username,
+                    password_hash=hash_password("Member123"),
+                    full_name=payload.full_name.strip(),
+                    email=auto_email,
+                    phone=clean_phone,
+                    role=UserRole.MEMBER,
+                    status=UserStatus.ACTIVE,
+                )
+                db.add(existing_user)
+                db.flush()
 
             member = Member(
-                user_id=new_user.user_id,
-                full_name=new_user.full_name,
+                user_id=existing_user.user_id,
                 gender=Gender.MALE,
                 date_of_birth=date(1998, 1, 1),
-                phone=clean_phone,
-                email=auto_email,
                 address="Đăng ký tại quầy POS",
                 join_date=today,
                 status=MemberStatus.ACTIVE,
@@ -246,7 +253,7 @@ def pos_checkout(
 
         final_amount = max(Decimal("0.00"), total_amount - discount_amount)
 
-        # 4. Tạo Subscription mới / gia hạn
+        # 4. Tạo Subscription mới / gia hạn (cấp số buổi PT theo gói tập - Mục 3.2.4)
         new_sub = Subscription(
             member_id=member.member_id,
             plan_id=plan.plan_id,
@@ -254,6 +261,8 @@ def pos_checkout(
             previous_subscription_id=prev_sub_id,
             start_date=start_dt,
             end_date=end_dt,
+            total_sessions=plan.pt_sessions,
+            sessions_remaining=plan.pt_sessions,
             status=SubscriptionStatus.ACTIVE,
         )
         db.add(new_sub)
@@ -283,7 +292,7 @@ def pos_checkout(
             amount=final_amount if final_amount > 0 else Decimal("1.00"),
             payment_method=pay_method,
             status=PaymentStatus.SUCCESS,
-            transaction_code=f"POS-{inv.invoice_id:06d}-{int(datetime.now().timestamp())}",
+            transaction_code=f"POS-{inv.invoice_id:06d}-{int(now_vn().timestamp())}",
         )
         db.add(pay)
 
@@ -315,6 +324,8 @@ def pos_checkout(
             "plan_id": plan.plan_id,
             "plan_name": plan.plan_name,
             "duration_days": plan.duration_days,
+            "total_sessions": new_sub.total_sessions,
+            "sessions_remaining": new_sub.sessions_remaining,
             "start_date": start_dt,
             "end_date": end_dt,
         },
@@ -360,10 +371,12 @@ def list_pos_invoices(
         )
     if keyword and keyword.strip():
         kw = f"%{keyword.strip()}%"
+        member_user = db.query(User.user_id).filter(
+            or_(User.full_name.ilike(kw), User.phone.ilike(kw))
+        )
         query = query.filter(
             or_(
-                Member.full_name.ilike(kw),
-                Member.phone.ilike(kw),
+                Member.user_id.in_(member_user),
                 MembershipPlan.plan_name.ilike(kw),
             )
         )

@@ -114,6 +114,10 @@ class BookingStatus(str, enum.Enum):
 
     CANCELLED = "CANCELLED"
 
+    NO_SHOW = "NO_SHOW"
+
+    EXPIRED = "EXPIRED"
+
 class AttendanceStatus(str, enum.Enum):
 
     CHECKED_IN = "CHECKED_IN"
@@ -186,13 +190,25 @@ EMPLOYEE_ROLES: frozenset[UserRole] = frozenset(
 
 BOOKING_TRANSITIONS: dict[BookingStatus, set[BookingStatus]] = {
 
-    BookingStatus.PENDING: {BookingStatus.CONFIRMED, BookingStatus.CANCELLED},
+    BookingStatus.PENDING: {
+        BookingStatus.CONFIRMED,
+        BookingStatus.CANCELLED,
+        BookingStatus.EXPIRED,
+    },
 
-    BookingStatus.CONFIRMED: {BookingStatus.COMPLETED, BookingStatus.CANCELLED},
+    BookingStatus.CONFIRMED: {
+        BookingStatus.COMPLETED,
+        BookingStatus.CANCELLED,
+        BookingStatus.NO_SHOW,
+    },
 
     BookingStatus.COMPLETED: set(),
 
     BookingStatus.CANCELLED: set(),
+
+    BookingStatus.NO_SHOW: set(),
+
+    BookingStatus.EXPIRED: set(),
 
 }
 

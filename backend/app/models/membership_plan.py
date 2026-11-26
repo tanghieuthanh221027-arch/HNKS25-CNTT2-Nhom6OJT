@@ -17,6 +17,7 @@ class MembershipPlan(Base, TimestampMixin):
     __table_args__ = (
         CheckConstraint("duration_days > 0", name="duration_positive"),
         CheckConstraint("price >= 0", name="price_non_negative"),
+        CheckConstraint("pt_sessions >= 0", name="ck_membership_plans_pt_sessions_non_negative"),
         Index("ix_membership_plans_category_status", "category", "status"),
     )
 
@@ -24,6 +25,7 @@ class MembershipPlan(Base, TimestampMixin):
     plan_name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     category: Mapped[str] = mapped_column(String(100), nullable=False)
     duration_days: Mapped[int] = mapped_column(Integer, nullable=False)
+    pt_sessions: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[PlanStatus] = mapped_column(
@@ -37,4 +39,4 @@ class MembershipPlan(Base, TimestampMixin):
         return self.status == PlanStatus.ACTIVE
 
     def __repr__(self) -> str:
-        return f"<MembershipPlan id={self.plan_id} name={self.plan_name!r}>"
+        return f"<MembershipPlan id={self.plan_id} name={self.plan_name!r} pt_sessions={self.pt_sessions}>"

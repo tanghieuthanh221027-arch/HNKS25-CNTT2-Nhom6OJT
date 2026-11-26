@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.exception import BusinessRuleException, NotFoundException
 from app.core.qr_utils import generate_card_code, generate_qr_base64
+from app.core.timezone_utils import today_vn
 from app.db.database import get_db
 from app.dependencies.auth import get_current_user, require_staff_or_admin
 from app.models.discount import Discount
@@ -104,7 +105,7 @@ def create_subscription(
     if not member or not card:
         raise BusinessRuleException("Tài khoản này không phải hội viên để đăng ký gói tập.")
 
-    today = date.today()
+    today = today_vn()
     # Tự động khoá các gói đã quá hạn
     overdue_subs = (
         db.query(Subscription)
@@ -171,6 +172,8 @@ def create_subscription(
         previous_subscription_id=prev_sub_id,
         start_date=start_date,
         end_date=end_date,
+        total_sessions=plan.pt_sessions,
+        sessions_remaining=plan.pt_sessions,
         status=SubscriptionStatus.ACTIVE,
     )
     db.add(new_sub)
@@ -224,6 +227,8 @@ def create_subscription(
         "plan_id": plan.plan_id,
         "plan_name": plan.plan_name,
         "duration_days": plan.duration_days,
+        "total_sessions": new_sub.total_sessions,
+        "sessions_remaining": new_sub.sessions_remaining,
         "start_date": start_date,
         "end_date": effective_end_date,
         "days_remaining": days_remaining,
@@ -245,7 +250,7 @@ def get_my_subscription(
     current_user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     member, card = ensure_member_and_card(db, current_user)
-    today = date.today()
+    today = today_vn()
 
     if card and not card.qr_base64:
         card.qr_base64 = generate_qr_base64(card.card_code)
@@ -295,6 +300,8 @@ def get_my_subscription(
             "start_date": None,
             "end_date": None,
             "days_remaining": 0,
+            "total_sessions": 0,
+            "sessions_remaining": 0,
             "near_expiry_warning": False,
             "warning_message": "Bạn chưa có gói tập đang hoạt động. Hãy đăng ký gói tập để kích hoạt thẻ QR.",
             "streak_days": streak,
@@ -306,6 +313,8 @@ def get_my_subscription(
     latest_sub, latest_plan = latest_sub_tuple
     earliest_start = min((s.start_date for s, _ in active_subs), default=latest_sub.start_date)
     furthest_end = max((s.end_date for s, _ in active_subs), default=latest_sub.end_date)
+    total_pt_sessions = sum((s.total_sessions for s, _ in active_subs), 0)
+    pt_sessions_remaining = sum((s.sessions_remaining for s, _ in active_subs), 0)
     days_remaining = (furthest_end - today).days
     is_active = latest_sub.status == SubscriptionStatus.ACTIVE and furthest_end >= today
     near_expiry = is_active and 0 <= days_remaining <= 7
@@ -330,6 +339,8 @@ def get_my_subscription(
         "start_date": earliest_start,
         "end_date": furthest_end,
         "days_remaining": max(0, days_remaining),
+        "total_sessions": total_pt_sessions,
+        "sessions_remaining": pt_sessions_remaining,
         "near_expiry_warning": near_expiry,
         "warning_message": warning_msg,
         "streak_days": streak,
@@ -347,7 +358,7 @@ def list_expiring_subscriptions(
     db: Session = Depends(get_db),
     _current_user: User = Depends(require_staff_or_admin),
 ) -> dict[str, Any]:
-    today = date.today()
+    today = today_vn()
     cutoff = today + timedelta(days=within_days)
     rows = (
         db.query(Subscription, Member, MembershipPlan)
@@ -394,7 +405,7 @@ def send_expiry_reminders(
     db: Session = Depends(get_db),
     _current_user: User = Depends(require_staff_or_admin),
 ) -> dict[str, Any]:
-    today = date.today()
+    today = today_vn()
     cutoff = today + timedelta(days=within_days)
     rows = (
         db.query(Subscription, Member, MembershipPlan)

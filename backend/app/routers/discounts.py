@@ -180,11 +180,17 @@ def update_discount(
         raise NotFoundException(f"Không tìm thấy voucher #{discount_id}.")
 
     data = payload.model_dump(exclude_unset=True)
+    effective_type = disc.discount_type
     if "discount_type" in data and data["discount_type"]:
         dtype = data["discount_type"].strip().upper()
         if dtype not in ("PERCENT", "FIXED"):
             raise BusinessRuleException("Loại giảm giá chỉ nhận PERCENT hoặc FIXED.")
+        effective_type = dtype
         disc.discount_type = dtype
+
+    effective_val = data.get("discount_value", disc.discount_value)
+    if effective_type == "PERCENT" and effective_val is not None and effective_val > 100:
+        raise BusinessRuleException("Mức giảm theo % không được vượt quá 100%.")
     for field in (
         "description",
         "discount_value",

@@ -29,7 +29,7 @@ class AttendanceRecord(Base):
     )
     member_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("members.member_id", ondelete="CASCADE", onupdate="CASCADE"),
+        ForeignKey("members.member_id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
     )
     subscription_id: Mapped[Optional[int]] = mapped_column(

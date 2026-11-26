@@ -103,18 +103,25 @@ const memberStyles = `
 const DAY_NAMES = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"];
 const HOURS = ["07:00", "08:00", "09:00", "10:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"];
 
+const formatLocalDate = (d) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const getMondayStr = (baseDate = new Date()) => {
   const d = new Date(baseDate);
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   d.setDate(diff);
-  return d.toISOString().slice(0, 10);
+  return formatLocalDate(d);
 };
 
 const addDaysStr = (dateStr, days) => {
-  const d = new Date(`${dateStr}T00:00:00`);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  const [y, m, day] = dateStr.split("-").map(Number);
+  const d = new Date(y, m - 1, day + days);
+  return formatLocalDate(d);
 };
 
 const MemberPage = () => {
@@ -243,9 +250,10 @@ const MemberPage = () => {
   const handleCancelPTBooking = async (bookingId) => {
     setPtMessage({ type: "", text: "" });
     try {
-      await gymApi.updatePTBookingStatus(bookingId, "CANCELLED");
+      await gymApi.cancelPTBooking(bookingId, "Hội viên chủ động hủy trước giờ tập");
       setPtMessage({ type: "success", text: "Đã hủy lịch tập PT thành công." });
       loadPTSchedules();
+      loadSubscription();
     } catch (err) {
       setPtMessage({
         type: "error",
@@ -588,8 +596,12 @@ const MemberPage = () => {
                     color: "var(--member-muted)",
                   }}
                 >
-                  Chọn Huấn luyện viên và bấm vào ô trống màu xanh để đặt ca tập
-                  1-1 (Hệ thống tự động chặn trùng khung giờ)
+                  Chọn Huấn luyện viên và bấm vào ô trống màu xanh thuộc ca trực của PT để đặt lịch (Đặt trước &gt; 30 phút, hủy miễn phí trước &ge; 2 tiếng · Số buổi PT còn lại:{" "}
+                  <b style={{ color: "#ffb690" }}>
+                    {ptData.pt_quota?.sessions_remaining ?? subInfo?.sessions_remaining ?? 0}/
+                    {ptData.pt_quota?.total_sessions ?? subInfo?.total_sessions ?? 0} buổi
+                  </b>
+                  )
                 </p>
               </div>
 
@@ -676,21 +688,32 @@ const MemberPage = () => {
                           (b) =>
                             b.booking_date === dayStr &&
                             b.start_time === hour &&
-                            b.status !== "CANCELLED"
+                            b.status !== "CANCELLED" &&
+                            b.status !== "EXPIRED"
                         );
                         if (existing) {
                           if (existing.is_mine) {
+                            const canCancel =
+                              existing.status === "PENDING" ||
+                              existing.status === "CONFIRMED";
                             return (
                               <td key={dayStr}>
                                 <button
                                   type="button"
                                   className="pt-slot-btn pt-slot-mine"
+                                  disabled={!canCancel}
                                   onClick={() =>
+                                    canCancel &&
                                     handleCancelPTBooking(existing.booking_id)
                                   }
-                                  title="Bấm để hủy lịch đặt này"
+                                  title={
+                                    canCancel
+                                      ? "Bấm để hủy lịch đặt này (trước giờ tập >= 2 tiếng)"
+                                      : `Trạng thái kết thúc: ${existing.status}`
+                                  }
                                 >
-                                  Của bạn ({existing.status}) · Hủy
+                                  Của bạn ({existing.status})
+                                  {canCancel ? " · Hủy" : ""}
                                 </button>
                               </td>
                             );

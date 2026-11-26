@@ -22,7 +22,11 @@ const PTPage = () => {
 
   const handleUpdateStatus = async (bookingId, status) => {
     try {
-      const res = await gymApi.updatePTBookingStatus(bookingId, status);
+      let res;
+      if (status === "CONFIRMED") res = await gymApi.confirmPTBooking(bookingId);
+      else if (status === "COMPLETED") res = await gymApi.completePTBooking(bookingId);
+      else if (status === "NO_SHOW") res = await gymApi.markPTBookingNoShow(bookingId);
+      else res = await gymApi.cancelPTBooking(bookingId, "PT hủy ca trên cổng quản lý");
       setNotice(res.data.message);
       loadBookings();
     } catch (err) {
@@ -125,8 +129,7 @@ const PTPage = () => {
             Danh sách Lịch hẹn Tập 1-1 cùng Hội viên (Task T067DB0 &amp; T067EF6)
           </h1>
           <p style={{ margin: "0 0 18px", color: "#a6adc2", fontSize: "14px" }}>
-            Xác nhận (CONFIRMED), Đánh dấu hoàn thành (COMPLETED) hoặc Hủy
-            (CANCELLED) các buổi tập do hội viên đặt.
+            Xác nhận (CONFIRMED), Hoàn thành (COMPLETED), Đánh dấu vắng mặt (NO_SHOW - vẫn trừ buổi &amp; tính công PT) hoặc Hủy (CANCELLED). Tuyệt đối không xóa vật lý để bảo toàn dữ liệu kiểm toán.
           </p>
 
           {notice && (
@@ -208,7 +211,9 @@ const PTPage = () => {
                               ? "rgba(34,197,94,0.2)"
                               : b.status === "COMPLETED"
                               ? "rgba(59,130,246,0.2)"
-                              : b.status === "CANCELLED"
+                              : b.status === "NO_SHOW"
+                              ? "rgba(168,85,247,0.25)"
+                              : b.status === "CANCELLED" || b.status === "EXPIRED"
                               ? "rgba(239,68,68,0.2)"
                               : "rgba(245,158,11,0.2)",
                         }}
@@ -220,6 +225,7 @@ const PTPage = () => {
                       style={{
                         padding: "12px",
                         display: "flex",
+                        flexWrap: "wrap",
                         gap: "8px",
                       }}
                     >
@@ -243,25 +249,44 @@ const PTPage = () => {
                         </button>
                       )}
                       {b.status === "CONFIRMED" && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleUpdateStatus(b.booking_id, "COMPLETED")
-                          }
-                          style={{
-                            padding: "6px 10px",
-                            borderRadius: "6px",
-                            border: "none",
-                            background: "#3b82f6",
-                            color: "#fff",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                          }}
-                        >
-                          ★ Hoàn thành
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleUpdateStatus(b.booking_id, "COMPLETED")
+                            }
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              border: "none",
+                              background: "#3b82f6",
+                              color: "#fff",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            ★ Hoàn thành
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleUpdateStatus(b.booking_id, "NO_SHOW")
+                            }
+                            style={{
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid rgba(168,85,247,0.45)",
+                              background: "rgba(168,85,247,0.2)",
+                              color: "#e9d5ff",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            ⚠ Vắng mặt (NO_SHOW)
+                          </button>
+                        </>
                       )}
-                      {b.status !== "CANCELLED" && b.status !== "COMPLETED" && (
+                      {(b.status === "PENDING" || b.status === "CONFIRMED") && (
                         <button
                           type="button"
                           onClick={() =>

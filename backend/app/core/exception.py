@@ -18,6 +18,15 @@ class AppException(Exception):
         super().__init__(message)
 
 
+class BadRequestException(AppException):
+    def __init__(self, message: str = "Yêu cầu không hợp lệ", error_code: str = "BAD_REQUEST") -> None:
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code=error_code,
+        )
+
+
 class UnauthorizedException(AppException):
     def __init__(self, message: str = "Không có quyền truy cập hoặc phiên đăng nhập hết hạn") -> None:
         super().__init__(

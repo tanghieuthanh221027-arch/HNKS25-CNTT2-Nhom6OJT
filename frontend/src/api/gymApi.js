@@ -42,12 +42,21 @@ const gymApi = {
   getCheckInHistory: (params = {}) =>
     axiosClient.get("/checkins/history", { params }),
 
-  // PT 1-1 Schedules
+  // PT 1-1 Schedules (Chuẩn Mục 1.4, 4.4, 4.5, 5.6: không có DELETE vật lý, bổ sung PATCH confirm/cancel/complete/no-show)
   getPTSchedules: (params = {}) =>
     axiosClient.get("/pt-schedules", { params }),
+  createPTWorkSlot: (data) => axiosClient.post("/pt-schedules/work-slots", data),
   createPTBooking: (data) => axiosClient.post("/pt-schedules", data),
-  updatePTBookingStatus: (bookingId, status) =>
-    axiosClient.put(`/pt-schedules/${bookingId}/status`, { status }),
+  confirmPTBooking: (bookingId) =>
+    axiosClient.patch(`/pt-schedules/${bookingId}/confirm`),
+  cancelPTBooking: (bookingId, reason = "") =>
+    axiosClient.patch(`/pt-schedules/${bookingId}/cancel`, { reason }),
+  completePTBooking: (bookingId) =>
+    axiosClient.patch(`/pt-schedules/${bookingId}/complete`),
+  markPTBookingNoShow: (bookingId, reason = "") =>
+    axiosClient.patch(`/pt-schedules/${bookingId}/no-show`, { reason }),
+  updatePTBookingStatus: (bookingId, status, reason = "") =>
+    axiosClient.put(`/pt-schedules/${bookingId}/status`, { status, reason }),
 
   // POS & Invoices
   lookupMemberByPhone: (phone) =>

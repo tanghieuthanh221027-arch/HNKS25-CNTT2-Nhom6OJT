@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 
 from app.db.base import Base
-from app.db.database import engine
+from app.db.database import SessionLocal, engine
+from app.db.schema_upgrade import upgrade_mysql_schema
 from app.db.seed import seed_all
 from app.models.enums import UserRole, UserStatus
 from app.models.user import User
@@ -9,6 +10,11 @@ from app.models.user import User
 
 def create_tables() -> None:
     Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        upgrade_mysql_schema(db)
+    finally:
+        db.close()
 
 
 def drop_tables() -> None:

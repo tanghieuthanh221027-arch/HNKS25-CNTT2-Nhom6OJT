@@ -658,6 +658,17 @@ const AdminPage = () => {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {isAdmin && !isStaffRoute && (
+            <Link
+              to="/pages/test-lab"
+              data-testid="admin-only-test-lab-link"
+              className="admin-btn admin-btn-secondary"
+              style={{ justifyContent: "center", textDecoration: "none", borderColor: "rgba(249,115,22,0.4)", color: "#ffb690" }}
+            >
+              <span className="material-symbols-outlined">science</span>
+              Chạy thử &amp; Test Lab
+            </Link>
+          )}
           <Link
             to="/kiosk"
             className="admin-btn admin-btn-secondary"

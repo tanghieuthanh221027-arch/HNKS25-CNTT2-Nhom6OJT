@@ -1,4 +1,3 @@
-from datetime import date
 from decimal import Decimal
 from typing import Any
 
@@ -7,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.core.exception import BusinessRuleException, ConflictException, UnauthorizedException
 from app.core.security import hash_password, verify_password
+from app.core.timezone_utils import today_vn
 from app.models.body_metric import BodyMetric
 from app.models.member_card import MemberCard
 from app.models.user import User
@@ -113,8 +113,6 @@ def update_my_profile(
             if existing_email:
                 raise ConflictException("Email này đã được sử dụng (BR03).")
             current_user.email = new_email
-            if current_user.member:
-                current_user.member.email = new_email
 
     # Kiểm tra trùng số điện thoại (BR03)
     if "phone" in update_data and update_data["phone"] is not None:
@@ -128,14 +126,10 @@ def update_my_profile(
             if existing_phone:
                 raise ConflictException("Số điện thoại này đã được sử dụng (BR03).")
             current_user.phone = new_phone
-            if current_user.member:
-                current_user.member.phone = new_phone
 
     # Cập nhật họ tên
     if "full_name" in update_data and update_data["full_name"] is not None:
         current_user.full_name = update_data["full_name"]
-        if current_user.member:
-            current_user.member.full_name = update_data["full_name"]
 
     # Cập nhật bio (cho TRAINER)
     if "bio" in update_data and current_user.is_trainer:
@@ -171,7 +165,7 @@ def update_my_profile(
             if "height_cm" in update_data or "weight_kg" in update_data:
                 bm = BodyMetric(
                     user_id=current_user.user_id,
-                    recorded_date=date.today(),
+                    recorded_date=today_vn(),
                     height_cm=card.height_cm,
                     weight_kg=card.weight_kg,
                     bmi=card.bmi,

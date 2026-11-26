@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
+from app.core.timezone_utils import now_vn, today_vn
 from app.db.database import get_db
 from app.dependencies.auth import get_current_user, require_staff_or_admin
 from app.models.attendance_record import AttendanceRecord
@@ -66,8 +67,8 @@ def qr_checkin_checkout(
 ) -> dict[str, Any]:
     start_ts = perf_time.perf_counter()
     raw_code = payload.qr_code.strip()
-    today = date.today()
-    now = datetime.now()
+    today = today_vn()
+    now = now_vn()
 
     # 1. Tìm thẻ hội viên theo card_code (hoặc DG-XXXXXX)
     card = db.query(MemberCard).filter(MemberCard.card_code == raw_code).first()
@@ -238,7 +239,7 @@ def get_checkin_history(
     current_user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     # Đếm số người hiện đang tập trong phòng (CHECKED_IN và chưa check_out hôm nay)
-    today_start = datetime.combine(date.today(), datetime.min.time())
+    today_start = datetime.combine(today_vn(), datetime.min.time())
     active_in_gym_count = (
         db.query(func.count(AttendanceRecord.attendance_id))
         .filter(
@@ -253,6 +254,7 @@ def get_checkin_history(
     query = (
         db.query(AttendanceRecord, Member, MemberCard, MembershipPlan)
         .join(Member, Member.member_id == AttendanceRecord.member_id)
+        .join(User, User.user_id == Member.user_id)
         .outerjoin(MemberCard, MemberCard.member_id == Member.member_id)
         .outerjoin(
             Subscription,
@@ -281,8 +283,8 @@ def get_checkin_history(
             kw = f"%{keyword.strip()}%"
             query = query.filter(
                 or_(
-                    Member.full_name.ilike(kw),
-                    Member.phone.ilike(kw),
+                    User.full_name.ilike(kw),
+                    User.phone.ilike(kw),
                     MemberCard.card_code.ilike(kw),
                 )
             )

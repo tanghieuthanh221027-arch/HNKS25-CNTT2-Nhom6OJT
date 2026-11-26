@@ -1,7 +1,7 @@
-from datetime import date, time
-from typing import TYPE_CHECKING
+from datetime import date, datetime, time
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import CheckConstraint, Date, ForeignKey, Index, Integer, Time, UniqueConstraint
+from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Index, Integer, Time, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
@@ -13,9 +13,18 @@ if TYPE_CHECKING:
 
 
 class TrainerSchedule(Base):
+    """
+    Khung giờ ca trực mở của Huấn luyện viên (Mục 5.2, 5.3, 6.1):
+    - Đổi ondelete="RESTRICT" bảo vệ toàn vẹn khoá ngoại (BR04).
+    - Bổ sung start_at / end_at kiểu DATETIME hỗ trợ ca trực xuyên đêm (VD: 23:00 -> 01:00 hôm sau).
+    """
+
     __tablename__ = "trainer_schedules"
     __table_args__ = (
-        CheckConstraint("end_time > start_time", name="ck_trainer_schedules_time_range"),
+        CheckConstraint(
+            "end_at IS NULL OR start_at IS NULL OR end_at > start_at",
+            name="ck_trainer_schedules_datetime_range",
+        ),
         UniqueConstraint(
             "trainer_id", "work_date", "start_time", name="uq_trainer_schedules_slot"
         ),
@@ -25,12 +34,14 @@ class TrainerSchedule(Base):
     schedule_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     trainer_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("users.user_id", ondelete="CASCADE", onupdate="CASCADE"),
+        ForeignKey("users.user_id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
     )
     work_date: Mapped[date] = mapped_column(Date, nullable=False)
     start_time: Mapped[time] = mapped_column(Time, nullable=False)
     end_time: Mapped[time] = mapped_column(Time, nullable=False)
+    start_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    end_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     status: Mapped[ScheduleStatus] = mapped_column(
         enum_column(ScheduleStatus, 20), nullable=False, default=ScheduleStatus.ACTIVE
     )

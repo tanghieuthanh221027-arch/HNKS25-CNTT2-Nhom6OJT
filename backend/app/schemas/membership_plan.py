@@ -15,6 +15,7 @@ class PlanBase(BaseModel):
     plan_name: PlanName
     category: PlanCategory = "Gói Hội Viên"
     duration_days: int = Field(gt=0, le=3650)
+    pt_sessions: int = Field(default=0, ge=0, le=1000)
     price: PositiveMoney
     description: Optional[str] = None
 
@@ -27,6 +28,7 @@ class PlanUpdate(BaseModel):
     plan_name: Optional[PlanName] = None
     category: Optional[PlanCategory] = None
     duration_days: Optional[int] = Field(default=None, gt=0, le=3650)
+    pt_sessions: Optional[int] = Field(default=None, ge=0, le=1000)
     price: Optional[PositiveMoney] = None
     description: Optional[str] = None
     status: Optional[PlanStatus] = None
@@ -47,6 +49,7 @@ class PlanResponse(ORMModel):
     plan_name: str
     category: str
     duration_days: int
+    pt_sessions: int = 0
     price: Decimal
     description: Optional[str] = None
     status: PlanStatus

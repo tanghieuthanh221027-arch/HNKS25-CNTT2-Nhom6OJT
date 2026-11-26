@@ -26,12 +26,12 @@ class TrainerMember(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     trainer_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("users.user_id", ondelete="CASCADE", onupdate="CASCADE"),
+        ForeignKey("users.user_id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
     )
     member_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("members.member_id", ondelete="CASCADE", onupdate="CASCADE"),
+        ForeignKey("members.member_id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=False,
     )
     assigned_by: Mapped[int] = mapped_column(
